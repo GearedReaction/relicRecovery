@@ -38,14 +38,7 @@ public class OpModeGeneral {
 
     public static void motorInit (HardwareMap hardwareMap)
     {
-        //Motors
-        right1 = hardwareMap.dcMotor.get("frontRight");
-        left1 = hardwareMap.dcMotor.get("frontLeft");
-        right2 = hardwareMap.dcMotor.get("backRight");
-        left2 = hardwareMap.dcMotor.get("backLeft");
-        combine = hardwareMap.dcMotor.get("combine");
-        catapult = hardwareMap.dcMotor.get("Catapult");
-        lifter = hardwareMap.dcMotor.get("lifter");
+
     }
 
     public static void servoInit(HardwareMap hardwareMap)
@@ -58,6 +51,7 @@ public class OpModeGeneral {
         //Color Sensors
 
     }
+
 
     private static double _topLeft, _topRight, _bottomLeft, _bottomRight, _maxVector;
 
@@ -135,7 +129,7 @@ public class OpModeGeneral {
 
 
 
-    public static void encoderMove(float power, float[] distanceInTicks, float angle)
+    public static void mecanumEncoderMove(float power, float[] distanceInTicks, float angle)
     {
         resetDriveEncoders(true);
 
@@ -156,22 +150,13 @@ public class OpModeGeneral {
 
     public static void resetDriveEncoders(boolean useEncoders)
     {
-        left1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        left2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        right1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        right2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //Stop and reset encoder
         if (!useEncoders) {
-            left1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            left2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            right1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            right2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            //Run without encoder
         }
         else
         {
-            left1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            left2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            right1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            right2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            //Run using encoder
         }
     }
 }
