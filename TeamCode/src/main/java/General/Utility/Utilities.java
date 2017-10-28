@@ -5,4 +5,10 @@ package General.Utility;
  */
 
 public class Utilities {
+
+    public static double squareWithNegative(double num)
+    {
+        return num > 0 ? Math.pow(num, 2) : -Math.pow(num,2);
+    }
+
 }

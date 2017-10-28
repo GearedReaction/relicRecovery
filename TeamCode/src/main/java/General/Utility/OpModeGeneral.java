@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.I2cDevice;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Hardware;
 
 import Devices.Drivers.AdafruitRGB;
 import Devices.Drivers.ModernRoboticsGyro;
@@ -15,40 +16,78 @@ import Devices.Drivers.ModernRoboticsRGB;
 
 public class OpModeGeneral {
 
-    public static DcMotor left1;
-    public static DcMotor right1;
+    public static DcMotor leftFront;
+    public static DcMotor rightFront;
     public static DcMotor combine;
-    public static DcMotor left2;
-    public static DcMotor right2;
+    public static DcMotor leftBack;
+    public static DcMotor rightBack;
     public static DcMotor catapult;
     public static DcMotor lifter;
-    public static ModernRoboticsRGB colorMid;
-    public static ModernRoboticsRGB colorBeacon;
-    public static ModernRoboticsRGB colorBack;
-    public static ModernRoboticsGyro gyro;
-    public static Servo flipper;
 
 
-    public static void allInit (HardwareMap hardwareMap)
-    {
+
+    public static void allInit (HardwareMap hardwareMap) {
         motorInit(hardwareMap);
         sensorInit(hardwareMap);
         servoInit(hardwareMap);
     }
 
-    public static void motorInit (HardwareMap hardwareMap)
-    {
+    public static void motorInit (HardwareMap hardwareMap) {
+        leftFront = hardwareMap.dcMotor.get("leftF");
+        leftBack = hardwareMap.dcMotor.get("leftB");
+        rightFront = hardwareMap.dcMotor.get("rightF");
+        rightBack = hardwareMap.dcMotor.get("rightB");
 
     }
 
-    public static void servoInit(HardwareMap hardwareMap)
-    {
+    public static void servoInit(HardwareMap hardwareMap) {
 
     }
 
-    public static void sensorInit (HardwareMap hardwareMap)
-    {
+    public static void sensorInit (HardwareMap hardwareMap) {
         //Color Sensors
+
+    }
+
+
+    public void rawMove (double rightF, double rightB, double leftF, double leftB, boolean reverse)
+    {
+        int multiplier = reverse ? 1 : -1;
+
+        leftFront.setPower(leftF * multiplier);
+        leftBack.setPower(leftB * multiplier);
+        rightFront.setPower(rightF * multiplier);
+        rightBack.setPower(rightB * multiplier);
+    }
+
+    public void tankMove (double leftY, double rightY, boolean reverse)
+    {
+        int multiplier = reverse ? 1 : -1;
+
+        leftFront.setPower(leftY * multiplier);
+        leftBack.setPower(leftY * multiplier);
+        rightFront.setPower(rightY * multiplier);
+        rightBack.setPower(rightY * multiplier);
+    }
+
+    public void divisionDrive (double leftY, double rightX, boolean reverse)
+    {
+        double rightVector = leftY - rightX;
+        double leftVector = rightX + leftY;
+        double larger;
+        if (Math.abs(rightVector) > 1 || Math.abs(leftVector) > 1)
+        {
+            larger = Math.max(rightVector, leftVector);
+            rightVector /= larger;
+            leftVector /= larger;
+        }
+        rightVector = Utilities.squareWithNegative(rightVector);
+        leftVector = Utilities.squareWithNegative(leftVector);
+
+        leftFront.setPower(leftVector);
+        leftBack.setPower(leftVector);
+        rightFront.setPower(rightVector);
+        rightBack.setPower(rightVector);
 
     }
 
@@ -81,11 +120,12 @@ public class OpModeGeneral {
         _maxVector = _maxVector > 1 ? _maxVector : 1;
 
         //Set power to values divided by the largest so numbers are in range and proportional
-        left1.setPower(_topLeft/_maxVector);
-        left2.setPower(_topRight/_maxVector);
-        right1.setPower(_bottomLeft/_maxVector);
-        right2.setPower(_bottomRight/_maxVector);
+        leftFront.setPower(_topLeft/_maxVector);
+        leftBack.setPower(_topRight/_maxVector);
+        rightFront.setPower(_bottomLeft/_maxVector);
+        rightBack.setPower(_bottomRight/_maxVector);
     }
+
     public static void mecanumMove (double leftX, double leftY, double rightX, boolean negated, float speed){
         //Each joystick alone gives the wheel a unique set of instructions
         //These equations add them all together
@@ -113,24 +153,21 @@ public class OpModeGeneral {
 
         //Set power to values divided by the largest so numbers are in range and proportional
         if (_maxVector <= 1) {
-            left1.setPower(speed * (_topLeft / _maxVector));
-            left2.setPower(speed * (_topRight / _maxVector));
-            right1.setPower(speed * (_bottomLeft / _maxVector));
-            right2.setPower(speed * (_bottomRight / _maxVector));
+            leftFront.setPower(speed * (_topLeft / _maxVector));
+            leftBack.setPower(speed * (_topRight / _maxVector));
+            rightFront.setPower(speed * (_bottomLeft / _maxVector));
+            rightBack.setPower(speed * (_bottomRight / _maxVector));
         }
         else
         {
-            left1.setPower(_topLeft / _maxVector);
-            left2.setPower(_topRight / _maxVector);
-            right1.setPower(_bottomLeft / _maxVector);
-            right2.setPower(_bottomRight / _maxVector);
+            leftFront.setPower(_topLeft / _maxVector);
+            leftBack.setPower(_topRight / _maxVector);
+            rightFront.setPower(_bottomLeft / _maxVector);
+            rightBack.setPower(_bottomRight / _maxVector);
         }
     }
 
-
-
-    public static void mecanumEncoderMove(float power, float[] distanceInTicks, float angle)
-    {
+    public static void mecanumEncoderMove(float power, float[] distanceInTicks, float angle) {
         resetDriveEncoders(true);
 
         mecanumDriveAngle(power,angle);
@@ -141,15 +178,13 @@ public class OpModeGeneral {
         mecanumMove(0,0,turnSpeed,false);
     }
 
-    public static void mecanumDriveAngle(float angle, float power)
-    {
+    public static void mecanumDriveAngle(float angle, float power) {
         float b = (float) Math.sin(90-angle);
         float a = (float) (Math.pow(power,2) - Math.pow(b,2));
         mecanumMove(a, b, 0,false);
     }
 
-    public static void resetDriveEncoders(boolean useEncoders)
-    {
+    public static void resetDriveEncoders(boolean useEncoders) {
         //Stop and reset encoder
         if (!useEncoders) {
             //Run without encoder
