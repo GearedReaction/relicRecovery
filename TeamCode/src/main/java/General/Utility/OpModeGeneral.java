@@ -18,7 +18,7 @@ public class OpModeGeneral {
 
     public static DcMotor leftFront;
     public static DcMotor rightFront;
-    public static DcMotor combine;
+    public static DcMotor conteb;
     public static DcMotor leftBack;
     public static DcMotor rightBack;
     public static DcMotor catapult;
@@ -50,7 +50,7 @@ public class OpModeGeneral {
     }
 
 
-    public void rawMove (double rightF, double rightB, double leftF, double leftB, boolean reverse)
+    public static void rawMove (double rightF, double rightB, double leftF, double leftB, boolean reverse)
     {
         int multiplier = reverse ? 1 : -1;
 
@@ -60,7 +60,7 @@ public class OpModeGeneral {
         rightBack.setPower(rightB * multiplier);
     }
 
-    public void tankMove (double leftY, double rightY, boolean reverse)
+    public static void tankMove (double leftY, double rightY, boolean reverse)
     {
         int multiplier = reverse ? 1 : -1;
 
@@ -70,7 +70,7 @@ public class OpModeGeneral {
         rightBack.setPower(rightY * multiplier);
     }
 
-    public void divisionDrive (double leftY, double rightX, boolean reverse)
+    public static void divisionDrive (double leftY, double rightX, boolean reverse)
     {
         double rightVector = leftY - rightX;
         double leftVector = rightX + leftY;
@@ -88,7 +88,6 @@ public class OpModeGeneral {
         leftBack.setPower(leftVector);
         rightFront.setPower(rightVector);
         rightBack.setPower(rightVector);
-
     }
 
 

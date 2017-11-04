@@ -36,7 +36,6 @@ public class OpModeTimers {
 //                OpModeGeneral.combine.setPower(0);
                 OpModeGeneral.mecanumMove(0, 0, 0, false);
                 OpModeGeneral.catapult.setPower(1);
-                OpModeGeneral.combine.setPower(0);
             }
         };
         stopAll = new TimerTask() {
@@ -60,13 +59,6 @@ public class OpModeTimers {
                 stage1Complete = true;
             }
         };
-        flip = new TimerTask() {
-            @Override
-            public void run() {
-                OpModeGeneral.combine.setPower(-1);
-            }
-        };
-
 
         park = new TimerTask() {
             @Override

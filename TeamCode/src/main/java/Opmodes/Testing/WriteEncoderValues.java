@@ -9,7 +9,6 @@ import General.Utility.OpModeGeneral;
  */
 
 
-@TeleOp(name = "Write Encoder Values", group = "TeleOp")
 
 public class WriteEncoderValues extends OpMode {
 
@@ -24,10 +23,7 @@ public class WriteEncoderValues extends OpMode {
     {
 
         OpModeGeneral.mecanumMove(gamepad1.y ? 0.25 : 0,gamepad1.x ? 0.25 : 0 ,0, false);
-        telemetry.addData("topLeft: ",OpModeGeneral.left1.getCurrentPosition());
-        telemetry.addData("bottomRight: ",OpModeGeneral.right2.getCurrentPosition());
-        telemetry.addData("topRight: ",OpModeGeneral.right1.getCurrentPosition());
-        telemetry.addData("bottomLeft: ",OpModeGeneral.left2.getCurrentPosition());
+
 
         if (gamepad1.start)
         {

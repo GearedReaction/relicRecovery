@@ -8,7 +8,7 @@ import Devices.Drivers.ModernRoboticsRGB;
 /**
  * Created by admin on 4/10/2017.
  */
-@TeleOp (name = "Modern Robotics RGB", group = "Sensors")
+
 public class ModernRoboticsRGBTest extends OpMode {
 
      ModernRoboticsRGB sensor;

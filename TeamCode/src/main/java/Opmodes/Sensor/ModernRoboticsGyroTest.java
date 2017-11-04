@@ -9,7 +9,6 @@ import Devices.Drivers.ModernRoboticsGyro;
  * Created by admin on 4/14/2017.
  */
 
-@TeleOp (name = "Modern Robotics Gyro", group = "Sensors")
 
 public class ModernRoboticsGyroTest extends OpMode {
 

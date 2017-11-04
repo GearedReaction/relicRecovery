@@ -9,8 +9,6 @@ import General.Utility.DataLogger;
  * Created by admin on 4/8/2017.
  */
 
-@TeleOp (name = "AdafruitTest", group = "Sensors")
-
 public class AdafruitRGBTest extends OpMode {
 
     Devices.Drivers.AdafruitRGB sensor;

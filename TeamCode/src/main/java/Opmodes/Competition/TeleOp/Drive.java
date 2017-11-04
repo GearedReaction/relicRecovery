@@ -12,36 +12,47 @@ import General.Utility.OpModeGeneral;
 public class Drive extends OpMode {
 
     //Values used to calculate power
-
+     int mode = 0;
     private boolean _lastAButton = false;
-    private boolean launchReady = true;
-
-    TimerTask launch = new TimerTask() {
-        @Override
-        public void run() {
-            OpModeGeneral.catapult.setPower(0);
-            launchReady = true;
-            return;
-        }
-    };
-
+    private boolean reverse = false;
 
     public void init()
     {
         OpModeGeneral.motorInit(hardwareMap);
     }
 
-    public void loop()
-    {
+    public void loop() {
 
-        OpModeGeneral.mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, -gamepad1.right_stick_x, negated);
+        if (gamepad1.dpad_up) {
+            mode = 0;
+        } else if (gamepad1.dpad_left) {
+            mode = 1;
+        } else if (gamepad1.dpad_right) {
+            mode = 2;
+        }
+
+        if(mode == 0) {
+            OpModeGeneral.divisionDrive(-gamepad1.left_stick_y, -gamepad1.right_stick_x, reverse);
+        } else if (mode == 1) {
+            OpModeGeneral.rawMove(-gamepad1.right_stick_y, -gamepad1.right_trigger, -gamepad1.left_stick_y, -gamepad1.left_trigger, reverse);
+        } else if (mode == 2) {
+            OpModeGeneral.tankMove(-gamepad1.left_stick_y, -gamepad1.right_stick_y, reverse);
+        }
+
+
+       // public static void rawMove (double rightF, double rightB, double leftF, double leftB, boolean reverse)
+       // public static void tankMove (double leftY, double rightY, boolean reverse)
+
+
+
+
+
         //Trigger
         if (gamepad1.a & !_lastAButton) { triggerReverse(); }
         if (gamepad1.a) { _lastAButton = true; }
         else { _lastAButton = false; }
-        OpModeGeneral.combine.setPower(gamepad2.right_stick_y);
-        OpModeGeneral.catapult.setPower(-gamepad2.left_stick_y);
 
+        OpModeGeneral.conteb.setPower(gamepad2.right_stick_y);
         if (gamepad2.dpad_up)
         {
             OpModeGeneral.lifter.setPower(1);
@@ -50,25 +61,11 @@ public class Drive extends OpMode {
             OpModeGeneral.lifter.setPower(-1);
         }
         else { OpModeGeneral.lifter.setPower(0); }
-
-
-    }
-    Timer timer = new Timer();
-    public void shoot()
-    {
-        if (launchReady) {
-            timer = new Timer();
-            launch.cancel();
-            launchReady = false;
-            OpModeGeneral.catapult.setPower(1);
-            timer.schedule(launch, 320);
-        }
-
     }
 
-    private boolean negated;
+
     public void triggerReverse ()
     {
-        negated = !negated;
+        reverse = !reverse;
     }
 }
