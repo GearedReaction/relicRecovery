@@ -5,6 +5,8 @@ import android.os.Environment;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
+import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -24,11 +26,7 @@ import General.Utility.OpModeGeneral;
 
 public class OnTheFlyReader extends OpMode {
 
-    List<MotionPoint> points = new ArrayList<MotionPoint>();
     List<MotionPoint> in;
-    float x;
-    float y;
-    float rot;
     public static final int RES = 5;
     private long milliseconds;
     private long startTimeSinceEpoch;
@@ -40,7 +38,7 @@ public class OnTheFlyReader extends OpMode {
 
     public void start() {
         try {
-            in = (List<MotionPoint>) new ObjectInputStream(new FileInputStream(Environment.getExternalStorageDirectory() + "/robotSaves/" + "current.mtmp"));
+            in = (List<MotionPoint>) new ObjectInputStream(new FileInputStream(FtcRobotControllerActivity.context.getFilesDir() + "/robotSaves/" + "current.mtmp"));
         } catch (FileNotFoundException FNFE) {
             telemetry.addData("FILE IS NOT FOUND", 1);
             System.out.println(FNFE.getStackTrace());

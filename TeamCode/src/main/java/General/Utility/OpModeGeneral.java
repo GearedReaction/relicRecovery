@@ -37,6 +37,8 @@ public class OpModeGeneral {
         leftBack = hardwareMap.dcMotor.get("leftB");
         rightFront = hardwareMap.dcMotor.get("rightF");
         rightBack = hardwareMap.dcMotor.get("rightB");
+        conteb = hardwareMap.dcMotor.get("conteb");
+        lifter = hardwareMap.dcMotor.get("lifter");
 
     }
 

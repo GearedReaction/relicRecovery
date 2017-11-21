@@ -32,7 +32,8 @@ public class Drive extends OpMode {
         }
 
         if(mode == 0) {
-            OpModeGeneral.divisionDrive(-gamepad1.left_stick_y, -gamepad1.right_stick_x, reverse);
+            OpModeGeneral.mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, -gamepad1.right_stick_x, reverse);
+            // OpModeGeneral.divisionDrive(-gamepad1.left_stick_y, -gamepad1.right_stick_x, reverse);
         } else if (mode == 1) {
             OpModeGeneral.rawMove(-gamepad1.right_stick_y, -gamepad1.right_trigger, -gamepad1.left_stick_y, -gamepad1.left_trigger, reverse);
         } else if (mode == 2) {
@@ -42,9 +43,6 @@ public class Drive extends OpMode {
 
        // public static void rawMove (double rightF, double rightB, double leftF, double leftB, boolean reverse)
        // public static void tankMove (double leftY, double rightY, boolean reverse)
-
-
-
 
 
         //Trigger
