@@ -5,7 +5,7 @@ import java.io.*;
 import General.DataType.Vector2;
 
 /**
- * Created by bryanperkins on 1/1/01.
+ * Created by brianperkins on 6/6/06.
  */
 public class MotionPoint implements Serializable{
 

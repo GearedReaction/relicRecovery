@@ -11,7 +11,7 @@ import Devices.Drivers.ModernRoboticsGyro;
 import Devices.Drivers.ModernRoboticsRGB;
 
 /**
- * Created by union on 11/8/16.
+ * Created by onion on 11/8/16.
  */
 
 public class OpModeGeneral {
@@ -23,6 +23,8 @@ public class OpModeGeneral {
     public static DcMotor rightBack;
     public static DcMotor catapult;
     public static DcMotor lifter;
+    public static DcMotor lifter2;
+    public static DcMotor extender;
 
 
 
@@ -39,6 +41,8 @@ public class OpModeGeneral {
         rightBack = hardwareMap.dcMotor.get("rightB");
         conteb = hardwareMap.dcMotor.get("conteb");
         lifter = hardwareMap.dcMotor.get("lifter");
+        lifter2 = hardwareMap.dcMotor.get("lifter2");
+        extender = hardwareMap.dcMotor.get("extender");
 
     }
 

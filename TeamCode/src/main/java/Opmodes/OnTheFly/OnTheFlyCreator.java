@@ -7,6 +7,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
 
+import org.json.*;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -20,20 +22,20 @@ import General.DataType.Vector2;
 import General.Utility.OpModeGeneral;
 
 /**
- * Created by null on 1/1/01.
+ * Created by bull on 1/1/01.
  */
 @TeleOp (name = "On The Fly Writer", group = "OnTheFly" )
 
 public class OnTheFlyCreator extends OpMode {
 
-    public static final int RES = 5;
+    public static final int RES = 10;
     private long milliseconds;
     private long startTimeSinceEpoch;
     List<MotionPoint> points = new ArrayList<MotionPoint>();
 
     public void init()
     {
-        //OpModeGeneral.allInit(hardwareMap);
+        OpModeGeneral.motorInit(hardwareMap);
     }
 
 
@@ -46,34 +48,37 @@ public class OnTheFlyCreator extends OpMode {
     public void loop()
     {
         if (i < RES) {
-            if (milliseconds >= (i + 1) * 30000 / RES) {
-                points.add(new MotionPoint(new Vector2(-gamepad1.left_stick_x, -gamepad1.left_stick_y, -gamepad1.right_stick_x), (int) milliseconds));
+            if (milliseconds >= (i + 1) * (30000 / RES)) {
+                points.add(new MotionPoint(new Vector2(-gamepad1.left_stick_x, -gamepad1.left_stick_y, -gamepad1.right_stick_x),i));
                 i++;
             }
         }
-        //OpModeGeneral.mecanumMove(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x,false);
-        //Save inputs based on resolution
+        OpModeGeneral.mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, -gamepad1.right_stick_x, false);
         milliseconds = System.currentTimeMillis() - startTimeSinceEpoch;
-        telemetry.addData("Time:", milliseconds);
-        telemetry.addData("MPoint:", -gamepad1.left_stick_x + " : " + -gamepad1.left_stick_y + " : " + -gamepad1.right_stick_x);
 
+
+        telemetry.addData("Time:", milliseconds);
+        telemetry.addData("MPointCount:", points.size());
+        telemetry.addData("MPoint:", -gamepad1.left_stick_x + " : " + -gamepad1.left_stick_y + " : " + -gamepad1.right_stick_x);
     }
     public void stop()
     {
         //Save to file
         ObjectOutputStream obj = null;
+        FileOutputStream stream;
         try {
             File dir = new File(FtcRobotControllerActivity.context.getFilesDir()+"/robotSaves");
             if (!(dir.exists() && dir.isDirectory()))
             {
                 dir.mkdirs();
             }
-            obj =  new ObjectOutputStream(new FileOutputStream(FtcRobotControllerActivity.context.getFilesDir() + "/robotSaves/" +"current.mtmp"));
+            stream = new FileOutputStream(FtcRobotControllerActivity.context.getFilesDir() + "/robotSaves/" +"current.mtmp");
+            obj =  new ObjectOutputStream(stream);
             obj.writeObject(points);
         }
         catch (FileNotFoundException fl)
         {
-            telemetry.addData("FIILE IS NOT FOUND", 1);
+            telemetry.addData("FILE IS NOT FOUND", 1);
             System.out.println(fl.getStackTrace());
         }
         catch (IOException io)
@@ -85,7 +90,6 @@ public class OnTheFlyCreator extends OpMode {
         {
                 if (obj != null) {
                     try {
-                        obj.flush();
                         obj.close();
                     }
                     catch (IOException io)
@@ -98,6 +102,5 @@ public class OnTheFlyCreator extends OpMode {
 
         }
     }
-
-
+//Take a list of objects that have three values inside, write to file, read the list back into a list object
 }
