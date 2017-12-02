@@ -16,15 +16,17 @@ import Devices.Drivers.ModernRoboticsRGB;
 
 public class OpModeGeneral {
 
+    //Motors
     public static DcMotor leftFront;
     public static DcMotor rightFront;
-    public static DcMotor conteb;
     public static DcMotor leftBack;
     public static DcMotor rightBack;
     public static DcMotor catapult;
     public static DcMotor lifter;
     public static DcMotor lifter2;
     public static DcMotor extender;
+    //Servos
+    public static Servo grabber;
 
 
 
@@ -39,15 +41,13 @@ public class OpModeGeneral {
         leftBack = hardwareMap.dcMotor.get("leftB");
         rightFront = hardwareMap.dcMotor.get("rightF");
         rightBack = hardwareMap.dcMotor.get("rightB");
-        conteb = hardwareMap.dcMotor.get("conteb");
         lifter = hardwareMap.dcMotor.get("lifter");
         lifter2 = hardwareMap.dcMotor.get("lifter2");
         extender = hardwareMap.dcMotor.get("extender");
-
     }
 
     public static void servoInit(HardwareMap hardwareMap) {
-
+        grabber = hardwareMap.servo.get("grabber");
     }
 
     public static void sensorInit (HardwareMap hardwareMap) {

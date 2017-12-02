@@ -1,7 +1,5 @@
 package Opmodes.OnTheFly;
 
-import android.os.Environment;
-
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
@@ -10,9 +8,7 @@ import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.util.ArrayList;
 import java.util.List;
 
 import General.DataType.MotionPoint;

@@ -1,13 +1,9 @@
 package Opmodes.OnTheFly;
 
-import android.os.Environment;
-
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
-
-import org.json.*;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -22,7 +18,7 @@ import General.DataType.Vector2;
 import General.Utility.OpModeGeneral;
 
 /**
- * Created by bull on 1/1/01.
+ * Created by bryan perkins on 1/1/01.
  */
 @TeleOp (name = "On The Fly Writer", group = "OnTheFly" )
 
