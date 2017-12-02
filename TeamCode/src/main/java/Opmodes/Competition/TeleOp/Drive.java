@@ -29,7 +29,7 @@ public class Drive extends OpMode {
         if (gamepad1.a) { _lastAButton = true; }
         else { _lastAButton = false; }
 
-        OpModeGeneral.grabber.setPosition(-(gamepad2.left_stick_x+1)/2);
+        OpModeGeneral.grabber.setPosition(1-(gamepad2.left_stick_x+1)/2);
 
 
         if (gamepad2.dpad_up)
