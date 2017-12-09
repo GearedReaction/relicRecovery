@@ -116,7 +116,6 @@ public class OnTheFlyCreator extends OpMode {
     }
     public void stop()
     {
-        //Save to file
 
     }
     public void save()
