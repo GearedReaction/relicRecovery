@@ -5,10 +5,13 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import General.DataType.MotionPoint;
@@ -24,7 +27,7 @@ import General.Utility.OpModeGeneral;
 public class OnTheFlyReader extends OpMode {
 
     List<MotionPoint> motionPoints;
-    public static final int RES = 10;
+    public static final int RES = 3000;
     private long milliseconds;
     private long startTimeSinceEpoch;
 
@@ -35,29 +38,7 @@ public class OnTheFlyReader extends OpMode {
 
     public void start() {
 
-        try {
-            String directory = FtcRobotControllerActivity.context.getFilesDir() + "/robotSaves/" + "current.mtmp";
-            FileInputStream stream = new FileInputStream(directory);
-            ObjectInputStream iStream = new ObjectInputStream(stream);
-            motionPoints = (List<MotionPoint>) iStream.readObject();
-            iStream.close();
-            stream.close();
-        }
-
-        catch (FileNotFoundException FNFE) {
-            telemetry.addData("FILE IS NOT FOUND", 1);
-            System.out.println(FNFE.getStackTrace());
-        }
-        catch (IOException IOE) {
-            telemetry.addData("IO EXCEPTION", 2);
-            System.out.println(IOE.getStackTrace());
-        }
-        catch (ClassNotFoundException CNFE)
-        {
-            telemetry.addData("CLASS NOT FOUND EXCEPTION", 3);
-            System.out.println(CNFE.getStackTrace());
-        }
-
+        motionPoints = loadFile(FtcRobotControllerActivity.context.getFilesDir() + "/robotSaves/" +"current.mtmp");
     }
     int i = 0;
     public void loop()
@@ -71,10 +52,46 @@ public class OnTheFlyReader extends OpMode {
             MotionPoint currentPoint = motionPoints.get(i - 1);
             Vector2 vec = currentPoint.vec;
             OpModeGeneral.mecanumMove(vec.x, vec.y, vec.rot, false);
+            OpModeGeneral.grabber.setPosition(currentPoint.grabber);
             milliseconds = System.currentTimeMillis() - startTimeSinceEpoch;
             telemetry.addData("Time:", milliseconds);
             telemetry.addData("i", i);
         }
 
+    }
+
+    private List<MotionPoint> loadFile(String fileName)
+    {
+        List<MotionPoint> movement = new ArrayList<MotionPoint>();
+        String line = null;
+        try {
+            FileReader fileReader = new FileReader(fileName);
+            BufferedReader reader = new BufferedReader(fileReader);
+
+            while((line = reader.readLine()) != null) {
+                //M:x,y,r,o
+                if (line.startsWith("M:"))
+                {
+                    line = line.substring(2);
+                    float x = Float.parseFloat(line.substring(0,5));
+                    float y = Float.parseFloat(line.substring(6,11));
+                    float rot = Float.parseFloat(line.substring(12,17));
+                    float grabber = Float.parseFloat(line.substring(18,23));
+                    int order = Integer.parseInt(line.substring(24));
+                    MotionPoint mp = new MotionPoint(new Vector2(x,y,rot),grabber,order);
+                    movement.add(mp);
+                }
+            }
+        }
+        catch (FileNotFoundException e)
+        {
+            System.out.println(e.getStackTrace());
+        }
+        catch (IOException e)
+        {
+            System.out.println(e.getStackTrace());
+        }
+
+        return movement;
     }
 }

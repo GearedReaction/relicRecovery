@@ -11,13 +11,15 @@ public class MotionPoint implements Serializable{
 
 
     public Vector2 vec;
+    public float grabber;
     public int order;
 
 
-    public MotionPoint (Vector2 _vec, int _order)
+    public MotionPoint (Vector2 _vec, float _grabber, int _order)
     {
         vec = _vec;
         order = _order;
+        grabber = _grabber;
     }
 
 

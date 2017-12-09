@@ -22,7 +22,7 @@ public class Drive extends OpMode {
     }
 
     public void loop() {
-        OpModeGeneral.mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, -gamepad1.right_stick_x, reverse);
+        OpModeGeneral.mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x, reverse);
 
         //Trigger
         if (gamepad1.a & !_lastAButton) { triggerReverse(); }
@@ -48,10 +48,10 @@ public class Drive extends OpMode {
 
 
 
-        if (gamepad2.dpad_right) {
+        if (gamepad2.right_bumper) {
             OpModeGeneral.extender.setPower(0.5);
         }
-        else if (gamepad2.dpad_left){
+        else if (gamepad2.left_bumper){
             OpModeGeneral.extender.setPower(-0.5);
         }
         else {
