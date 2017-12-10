@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -37,6 +38,7 @@ public class OnTheFlyReader extends OpMode {
     }
 
     public void start() {
+
 
         motionPoints = loadFile(FtcRobotControllerActivity.context.getFilesDir() + "/robotSaves/" +"current.mtmp");
     }

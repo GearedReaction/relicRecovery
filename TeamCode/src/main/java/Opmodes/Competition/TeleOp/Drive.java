@@ -13,6 +13,7 @@ public class Drive extends OpMode {
     //Values used to calculate power
     int mode = 0;
     private boolean _lastAButton = false;
+    private boolean _lastXButton = false;
     private boolean reverse = false;
 
     public void init()
@@ -22,7 +23,18 @@ public class Drive extends OpMode {
     }
 
     public void loop() {
-        OpModeGeneral.mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x, reverse);
+        // DRIVE WITH SLOW MODE NOT TESTEDS
+
+        if (gamepad1.x & !_lastXButton) {
+            OpModeGeneral.mecanumMove(-gamepad1.left_stick_x/2, -gamepad1.left_stick_y/2, -gamepad1.right_stick_x, !reverse);
+            _lastXButton = true;
+        } else if (!gamepad1.x & _lastXButton){
+            OpModeGeneral.mecanumMove(-gamepad1.left_stick_x/2, -gamepad1.left_stick_y/2, -gamepad1.right_stick_x, !reverse);
+        } else if (gamepad1.x & _lastXButton) {
+            _lastXButton = false;
+        } else {
+            OpModeGeneral.mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, -gamepad1.right_stick_x, !reverse);
+        }
 
         //Trigger
         if (gamepad1.a & !_lastAButton) { triggerReverse(); }
