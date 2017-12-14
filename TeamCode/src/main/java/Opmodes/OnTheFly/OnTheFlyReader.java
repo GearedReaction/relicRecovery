@@ -7,6 +7,7 @@ import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -28,25 +29,39 @@ import General.Utility.OpModeGeneral;
 public class OnTheFlyReader extends OpMode {
 
     List<MotionPoint> motionPoints;
-    public static final int RES = 3000;
     private long milliseconds;
     private long startTimeSinceEpoch;
+    private boolean redORblue = false;
+    private boolean frontORback = true;
+    private String filename = "";
+    private File dir = FtcRobotControllerActivity.context.getFilesDir();
 
-    public void init()
-    {
-        OpModeGeneral.allInit(hardwareMap);
-    }
+
+    public void init() { OpModeGeneral.allInit(hardwareMap); }
 
     public void start() {
+        int pictograph = OpModeGeneral.pictoSensor.getVuMark();
+        if (pictograph == -1) filename = "test.mtmp";
+        else
+        {
+            if (pictograph == 0) filename += "Left";
+            else if (pictograph == 1) filename += "Center";
+            else if (pictograph == 2) filename += "Right";
+            filename += redORblue ? "Red" : "Blue";
+            filename += frontORback ? "F" : "B";
+            filename += ".mtmp";
+        }
+        motionPoints = loadFile(dir + "/robotSaves/" + filename);
 
-
-        motionPoints = loadFile(FtcRobotControllerActivity.context.getFilesDir() + "/robotSaves/" +"current.mtmp");
+        startTimeSinceEpoch = System.currentTimeMillis();
+        milliseconds = 0;
     }
+
     int i = 0;
     public void loop()
     {
-        if (i < RES) {
-            if (milliseconds >= (i + 1) * (30000 / RES)) {
+        if (i < OnTheFlyCreator.RES) {
+            if (milliseconds >= (i + 1) * (30000 / OnTheFlyCreator.RES)) {
                 i++;
             }
         }
@@ -59,7 +74,6 @@ public class OnTheFlyReader extends OpMode {
             telemetry.addData("Time:", milliseconds);
             telemetry.addData("i", i);
         }
-
     }
 
     private List<MotionPoint> loadFile(String fileName)

@@ -6,9 +6,12 @@ import com.qualcomm.robotcore.hardware.I2cDevice;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Hardware;
 
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+
 import Devices.Drivers.AdafruitRGB;
 import Devices.Drivers.ModernRoboticsGyro;
 import Devices.Drivers.ModernRoboticsRGB;
+import Devices.Drivers.VuforiaCamera;
 
 /**
  * Created by onion on 11/8/16.
@@ -21,19 +24,21 @@ public class OpModeGeneral {
     public static DcMotor rightFront;
     public static DcMotor leftBack;
     public static DcMotor rightBack;
-    public static DcMotor catapult;
     public static DcMotor lifter;
-    public static DcMotor lifter2;
-    public static DcMotor extender;
+//  public static DcMotor extender;
+
     //Servos
     public static Servo grabber;
 
+    //Sensors
+    public static VuforiaCamera pictoSensor;
 
 
     public static void allInit (HardwareMap hardwareMap) {
         motorInit(hardwareMap);
         sensorInit(hardwareMap);
         servoInit(hardwareMap);
+        cameraInit(hardwareMap);
     }
 
     public static void motorInit (HardwareMap hardwareMap) {
@@ -42,8 +47,7 @@ public class OpModeGeneral {
         rightFront = hardwareMap.dcMotor.get("rightF");
         rightBack = hardwareMap.dcMotor.get("rightB");
         lifter = hardwareMap.dcMotor.get("lifter");
-        lifter2 = hardwareMap.dcMotor.get("lifter2");
-        extender = hardwareMap.dcMotor.get("extender");
+//      extender = hardwareMap.dcMotor.get("extender");
     }
 
     public static void servoInit(HardwareMap hardwareMap) {
@@ -51,8 +55,14 @@ public class OpModeGeneral {
     }
 
     public static void sensorInit (HardwareMap hardwareMap) {
-        //Color Sensors
 
+    }
+
+    public static void cameraInit (HardwareMap hardwareMap)
+    {
+        //Camera Init
+        pictoSensor = new VuforiaCamera(hardwareMap);
+        pictoSensor.initTracker();
     }
 
 

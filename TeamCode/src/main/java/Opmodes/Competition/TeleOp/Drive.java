@@ -2,19 +2,15 @@ package Opmodes.Competition.TeleOp;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.Servo;
-
 import General.Utility.OpModeGeneral;
-
 
 @TeleOp(name = "Drive", group = "Competition")
 public class Drive extends OpMode {
 
-    //Values used to calculate power
-    int mode = 0;
-    private boolean _lastAButton = false;
-    private boolean _lastXButton = false;
+    private boolean lastAButton = false;
+    private boolean lastXButton = false;
     private boolean reverse = false;
+    private boolean slomo = false;
 
     public void init()
     {
@@ -23,57 +19,28 @@ public class Drive extends OpMode {
     }
 
     public void loop() {
-        // DRIVE WITH SLOW MODE NOT TESTEDS
+        //Trigger reverse
+        if (gamepad1.a & !lastAButton) reverse = !reverse;
+        if (gamepad1.a) lastAButton = true;
+        else lastAButton = false;
 
-        if (gamepad1.x & !_lastXButton) {
-            OpModeGeneral.mecanumMove(-gamepad1.left_stick_x/2, -gamepad1.left_stick_y/2, -gamepad1.right_stick_x, !reverse);
-            _lastXButton = true;
-        } else if (!gamepad1.x & _lastXButton){
-            OpModeGeneral.mecanumMove(-gamepad1.left_stick_x/2, -gamepad1.left_stick_y/2, -gamepad1.right_stick_x, !reverse);
-        } else if (gamepad1.x & _lastXButton) {
-            _lastXButton = false;
-        } else {
-            OpModeGeneral.mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, -gamepad1.right_stick_x, !reverse);
-        }
+        //Trigger slow-mo
+        if (gamepad1.x & !lastXButton) slomo = !slomo;
+        if (gamepad1.x) lastXButton = true;
+        else lastXButton = false;
 
-        //Trigger
-        if (gamepad1.a & !_lastAButton) { triggerReverse(); }
-        if (gamepad1.a) { _lastAButton = true; }
-        else { _lastAButton = false; }
+        //Move robot
+        if (slomo) OpModeGeneral.mecanumMove(-gamepad1.left_stick_x/2, -gamepad1.left_stick_y/2, gamepad1.right_stick_x/2, !reverse);
+        else OpModeGeneral.mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x, !reverse);
 
-        OpModeGeneral.grabber.setPosition(1-(gamepad2.left_stick_x+1)/2);
+        //Compress or expand the grabber
+        OpModeGeneral.grabber.setPosition(1-(gamepad2.right_stick_x+1)/2);
 
+        //Expand the lifter
+        OpModeGeneral.lifter.setPower(-gamepad2.left_stick_y);
 
-        if (gamepad2.dpad_up)
-        {
-            OpModeGeneral.lifter.setPower(-0.5);
-            OpModeGeneral.lifter2.setPower(0.5);
-        }
-        else if (gamepad2.dpad_down) {
-            OpModeGeneral.lifter.setPower(0.5);
-            OpModeGeneral.lifter2.setPower(-0.5);
-        }
-        else {
-            OpModeGeneral.lifter.setPower(0);
-            OpModeGeneral.lifter2.setPower(0);
-        }
-
-
-
-        if (gamepad2.right_bumper) {
-            OpModeGeneral.extender.setPower(0.5);
-        }
-        else if (gamepad2.left_bumper){
-            OpModeGeneral.extender.setPower(-0.5);
-        }
-        else {
-            OpModeGeneral.extender.setPower(0);
-        }
-    }
-
-
-    public void triggerReverse ()
-    {
-        reverse = !reverse;
+//      if (gamepad2.dpad_right) OpModeGeneral.extender.setPower(0.5);
+//      else if (gamepad2.dpad_left) OpModeGeneral.extender.setPower(-0.5);
+//      else OpModeGeneral.extender.setPower(0);
     }
 }
