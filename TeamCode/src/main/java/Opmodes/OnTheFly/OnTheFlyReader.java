@@ -1,19 +1,18 @@
 package Opmodes.OnTheFly;
 
+import android.os.Environment;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import General.DataType.MotionPoint;
@@ -34,13 +33,14 @@ public class OnTheFlyReader extends OpMode {
     private boolean redORblue = false;
     private boolean frontORback = true;
     private String filename = "";
-    private File dir = FtcRobotControllerActivity.context.getFilesDir();
+    private File dir = Environment.getExternalStorageDirectory();
 
 
     public void init() { OpModeGeneral.allInit(hardwareMap); }
 
     public void start() {
         int pictograph = OpModeGeneral.pictoSensor.getVuMark();
+        telemetry.addData("VuMark", pictograph);
         if (pictograph == -1) filename = "test.mtmp";
         else
         {
@@ -51,6 +51,7 @@ public class OnTheFlyReader extends OpMode {
             filename += frontORback ? "F" : "B";
             filename += ".mtmp";
         }
+        telemetry.addData("File",filename);
         motionPoints = loadFile(dir + "/robotSaves/" + filename);
 
         startTimeSinceEpoch = System.currentTimeMillis();
@@ -61,25 +62,33 @@ public class OnTheFlyReader extends OpMode {
     public void loop()
     {
         if (i < OnTheFlyCreator.RES) {
-            if (milliseconds >= (i + 1) * (30000 / OnTheFlyCreator.RES)) {
+            if (milliseconds >= i * (30000 / motionPoints.size() - 1)) {
                 i++;
             }
         }
-        if (i >= 1) {
-            MotionPoint currentPoint = motionPoints.get(i - 1);
+        if (i >= 0 && i < motionPoints.size() - 1) {
+            MotionPoint currentPoint = motionPoints.get(i);
             Vector2 vec = currentPoint.vec;
             OpModeGeneral.mecanumMove(vec.x, vec.y, vec.rot, false);
             OpModeGeneral.grabber.setPosition(currentPoint.grabber);
             milliseconds = System.currentTimeMillis() - startTimeSinceEpoch;
+            telemetry.addData("MPoint","x: " + currentPoint.vec.x + "y: " + currentPoint.vec.y + "rot: "+ currentPoint.vec.rot);
+            telemetry.addData("Grabber", currentPoint.grabber);
+            telemetry.addData("order", currentPoint.order);
             telemetry.addData("Time:", milliseconds);
             telemetry.addData("i", i);
+        }
+        if (i >= motionPoints.size())
+        {
+            OpModeGeneral.mecanumMove(0,0,0,false);
+            OpModeGeneral.grabber.setPosition(0.5);
         }
     }
 
     private List<MotionPoint> loadFile(String fileName)
     {
         List<MotionPoint> movement = new ArrayList<MotionPoint>();
-        String line = null;
+        String line;
         try {
             FileReader fileReader = new FileReader(fileName);
             BufferedReader reader = new BufferedReader(fileReader);
@@ -89,13 +98,16 @@ public class OnTheFlyReader extends OpMode {
                 if (line.startsWith("M:"))
                 {
                     line = line.substring(2);
-                    float x = Float.parseFloat(line.substring(0,5));
-                    float y = Float.parseFloat(line.substring(6,11));
-                    float rot = Float.parseFloat(line.substring(12,17));
-                    float grabber = Float.parseFloat(line.substring(18,23));
-                    int order = Integer.parseInt(line.substring(24));
-                    MotionPoint mp = new MotionPoint(new Vector2(x,y,rot),grabber,order);
-                    movement.add(mp);
+                    List<String> strings = Arrays.asList(line.split("\\s*,\\s*"));
+                    if (strings.size() >= 5) {
+                        float x = Float.parseFloat(strings.get(0));
+                        float y = Float.parseFloat(strings.get(1));
+                        float rot = Float.parseFloat(strings.get(2));
+                        float grabber = Float.parseFloat(strings.get(3));
+                        int order = Integer.parseInt(strings.get(4));
+                        MotionPoint mp = new MotionPoint(new Vector2(x,y,rot),grabber,order);
+                        movement.add(mp);
+                    }
                 }
             }
         }
