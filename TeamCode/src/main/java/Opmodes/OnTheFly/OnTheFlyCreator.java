@@ -33,28 +33,18 @@ public class OnTheFlyCreator extends OpMode {
     private long milliseconds;
     private long startTimeSinceEpoch;
     private List<MotionPoint> points = new ArrayList<>();
-    private List<String> fileNames = new ArrayList<>();
     private File fileDir = Environment.getExternalStorageDirectory();
     private boolean saveIsReady;
     private int fileID = 0;
     private boolean saveStarted = false;
+    private boolean slomo = false;
+    private boolean lastXButton = false;
+    String fileName = "test.mtmp";
+    boolean frontORback = false;
+    boolean redORblue = false;
+    int column = 0;
 
-    private void initFileNames()
-    {
-        fileNames.add("test");
-        fileNames.add("LeftBlueF");
-        fileNames.add("CenterBlueF");
-        fileNames.add("RightBlueF");
-        fileNames.add("LeftBlueB");
-        fileNames.add("CenterBlueB");
-        fileNames.add("RightBlueB");
-        fileNames.add("LeftRedF");
-        fileNames.add("CenterRedF");
-        fileNames.add("RightRedF");
-        fileNames.add("LeftRedB");
-        fileNames.add("CenterRedB");
-        fileNames.add("RightRedB");
-    }
+
 
     public void init()
     {
@@ -73,15 +63,24 @@ public class OnTheFlyCreator extends OpMode {
     {
         //Record Data
         if (milliseconds <= 30000) {
+
+            //Trigger slow-mo
+            if (gamepad1.x & !lastXButton) slomo = !slomo;
+            if (gamepad1.x) lastXButton = true;
+            else lastXButton = false;
+
             if (i < RES) {
                 if (milliseconds >= i * (30000 / RES)) {
                     //Create MotionPoint
-                    points.add(new MotionPoint(new Vector2(-gamepad1.left_stick_x, -gamepad1.left_stick_y, -gamepad1.right_stick_x), 1 - (gamepad2.left_stick_x + 1) / 2, i));
+                    if (slomo) points.add(new MotionPoint(new Vector2(-gamepad1.left_stick_x / 2, -gamepad1.left_stick_y / 2, gamepad1.right_stick_x / 2), 1 - (gamepad2.left_stick_x + 1) / 2, i));
+                    else points.add(new MotionPoint(new Vector2(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x), 1 - (gamepad2.left_stick_x + 1) / 2, i));
                     i++;
                 }
             }
+
             //Move
-            OpModeGeneral.mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, -gamepad1.right_stick_x, false);
+            if (slomo) OpModeGeneral.mecanumMove(-gamepad1.left_stick_x/2, -gamepad1.left_stick_y/2, gamepad1.right_stick_x/2, false);
+            else OpModeGeneral.mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x, false);
             OpModeGeneral.grabber.setPosition(1 - (gamepad2.left_stick_x + 1) / 2);
 
             //Display data on screen
@@ -96,42 +95,49 @@ public class OnTheFlyCreator extends OpMode {
         //Save File
         else
         {
-            initFileNames();
-
-
             if (!saveIsReady)
             {
-                telemetry.clear();
                 telemetry.addData("Ready To Save", 0);
-                telemetry.addData("File Name", fileNames.get(fileID));
+                telemetry.addData("File Name", fileName);
+                telemetry.addData("Column", column);
+                telemetry.addData("frontORback", frontORback);
+                telemetry.addData("redORblue", redORblue);
 
-                if (gamepad1.right_bumper)
-                {
-                    fileID++;
-                    if (fileID >= fileNames.size())
-                    {
-                        fileID = 0;
-                    }
-                }
+                if (gamepad1.a) fileName = "test.mtmp";
+
+
+                if (gamepad1.dpad_up) frontORback = true;
+                else if (gamepad1.dpad_down) frontORback = false;
+                if (gamepad1.dpad_left) redORblue = false;
+                else if (gamepad1.dpad_right) redORblue = true;
+
+                if (gamepad1.x) column = 0;
+                else if (gamepad1.y) column = 1;
+                else if (gamepad1.b) column = 2;
+
                 if (gamepad1.left_bumper)
                 {
-                    fileID--;
-                    if (fileID <= 0)
-                    {
-                        fileID = fileNames.size() - 1;
-                    }
+                    fileName = "";
+                    if (column == 0) fileName += "Left";
+                    else if (column == 1) fileName += "Center";
+                    else if (column == 2) fileName += "Right";
+                    fileName += redORblue ? "Red" : "Blue";
+                    fileName += frontORback ? "F" : "B";
+                    fileName += ".mtmp";
+                    telemetry.addData("FileTest", fileName);
                 }
+
                 if (gamepad1.start)
                 {
                     saveIsReady = true;
                 }
             }
-            else if (!saveStarted) saveFile();
+            else if (!saveStarted) saveFile(fileName);
 
         }
     }
 
-    private void saveFile()
+    private void saveFile(String fileName)
     {
         saveStarted = true;
         FileWriter obj = null;
@@ -142,7 +148,7 @@ public class OnTheFlyCreator extends OpMode {
             if (!(dir.exists() && dir.isDirectory())) {
                 dir.mkdirs();
             }
-            output = new File(fileDir + "/robotSaves/" + fileNames.get(fileID) + ".mtmp");
+            output = new File(fileDir + "/robotSaves/" + fileName);
             obj = new FileWriter(output);
             buffered = new BufferedWriter(obj);
             for (MotionPoint mtmp : points) {

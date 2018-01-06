@@ -1,5 +1,8 @@
 package General.Utility;
 
+import android.graphics.Bitmap;
+import android.graphics.Color;
+
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.I2cDevice;
@@ -12,6 +15,7 @@ import Devices.Drivers.AdafruitRGB;
 import Devices.Drivers.ModernRoboticsGyro;
 import Devices.Drivers.ModernRoboticsRGB;
 import Devices.Drivers.VuforiaCamera;
+import General.DataType.RGB;
 
 /**
  * Created by onion on 11/8/16.
@@ -31,7 +35,7 @@ public class OpModeGeneral {
     public static Servo grabber;
 
     //Sensors
-    public static VuforiaCamera pictoSensor;
+    public static VuforiaCamera camera;
 
 
     public static void allInit (HardwareMap hardwareMap) {
@@ -61,8 +65,8 @@ public class OpModeGeneral {
     public static void cameraInit (HardwareMap hardwareMap)
     {
         //Camera Init
-        pictoSensor = new VuforiaCamera(hardwareMap);
-        pictoSensor.initTracker();
+        camera = new VuforiaCamera(hardwareMap);
+        camera.initTracker();
     }
 
 
@@ -208,5 +212,60 @@ public class OpModeGeneral {
         {
             //Run using encoder
         }
+    }
+
+    public static Bitmap[][] splitBitmap(Bitmap bitmap, int xCount, int yCount) {
+        Bitmap[][] bitmaps = new Bitmap[xCount][yCount];
+        int width, height;
+        width = bitmap.getWidth() / xCount;
+        height = bitmap.getHeight() / yCount;
+        for(int x = 0; x < xCount; ++x) {
+            for(int y = 0; y < yCount; ++y) {
+                bitmaps[x][y] = Bitmap.createBitmap(bitmap, x * width, y * height, width, height);
+            }
+        }
+        return bitmaps;
+    }
+
+    public static RGB calculateAverageColor(Bitmap bitmap) {
+        int R = 0; int G = 0; int B = 0;
+        int height = bitmap.getHeight();
+        int width = bitmap.getWidth();
+        int n = 0;
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+        for (int i = 0; i < pixels.length; i ++) {
+            int color = pixels[i];
+            R += Color.red(color);
+            G += Color.green(color);
+            B += Color.blue(color);
+            n++;
+        }
+        RGB rgb = new RGB(R/n,G/n,B/n);
+        return rgb;
+    }
+
+    public static int bluePeakCount(Bitmap bitmap)
+    {
+        return 0;
+    }
+
+    public static int redPeakCount(Bitmap bitmap)
+    {
+        return 0;
+    }
+
+    public static int getGreyscaleCount(Bitmap bitmap) {
+        int height = bitmap.getHeight();
+        int width = bitmap.getWidth();
+        int n = 0;
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+        for (int i = 0; i < pixels.length; i ++) {
+            int color = pixels[i];
+            if (Color.red(color) == Color.green(color) && Color.green(color) == Color.blue(color))
+                n++;
+        }
+        return n;
     }
 }

@@ -12,7 +12,6 @@ import General.Utility.OpModeGeneral;
 
 public class WriteEncoderValues extends OpMode {
 
-    @Override
     public void init()
     {
         OpModeGeneral.motorInit(hardwareMap);

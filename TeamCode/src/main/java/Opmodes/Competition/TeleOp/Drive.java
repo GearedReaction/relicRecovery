@@ -38,9 +38,5 @@ public class Drive extends OpMode {
 
         //Expand the lifter
         OpModeGeneral.lifter.setPower(-gamepad2.left_stick_y);
-
-//      if (gamepad2.dpad_right) OpModeGeneral.extender.setPower(0.5);
-//      else if (gamepad2.dpad_left) OpModeGeneral.extender.setPower(-0.5);
-//      else OpModeGeneral.extender.setPower(0);
     }
 }
