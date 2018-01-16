@@ -1,26 +1,22 @@
 package General.DataType;
 
 import java.io.*;
-
-import General.DataType.Vector2;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by brianperkins on 6/6/06.
  */
-public class MotionPoint implements Serializable{
+public class MotionPoint{
 
+    public List<MotorPoint> points = new ArrayList<>();
 
-    public Vector2 vec;
-    public float grabber;
-    public int order;
-
-
-    public MotionPoint (Vector2 _vec, float _grabber, int _order)
+    public MotionPoint(List<MotorPoint> _points)
     {
-        vec = _vec;
-        order = _order;
-        grabber = _grabber;
+        points = _points;
     }
 
-
+    public MotionPoint() {}
 }

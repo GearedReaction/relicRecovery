@@ -1,5 +1,6 @@
 package Opmodes.OnTheFly;
 
+import android.graphics.Path;
 import android.os.Environment;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -14,12 +15,16 @@ import java.io.ObjectOutputStream;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.io.*;
 
 import General.DataType.MotionPoint;
+import General.DataType.MotorPoint;
+import General.DataType.MovingPart;
 import General.DataType.Vector2;
 import General.Utility.OpModeGeneral;
+import General.DataType.MovingPart;
 
 /**
  * Created by bryan perkins on 1/1/01.
@@ -27,7 +32,6 @@ import General.Utility.OpModeGeneral;
 @TeleOp (name = "On The Fly Writer", group = "OnTheFly" )
 
 public class OnTheFlyCreator extends OpMode {
-
 
     public static final int RES = 3000;
     private long milliseconds;
@@ -39,10 +43,10 @@ public class OnTheFlyCreator extends OpMode {
     private boolean saveStarted = false;
     private boolean slomo = false;
     private boolean lastXButton = false;
-    String fileName = "test.mtmp";
-    boolean frontORback = false;
-    boolean redORblue = false;
-    int column = 0;
+    private String fileName = "test.mtmp";
+    private boolean frontORback = false;
+    private boolean redORblue = false;
+    private int column = 0;
 
 
 
@@ -58,7 +62,7 @@ public class OnTheFlyCreator extends OpMode {
         startTimeSinceEpoch = System.currentTimeMillis();
         milliseconds = 0;
     }
-    int i = 0;
+    private int i = 0;
     public void loop()
     {
         //Record Data
@@ -66,22 +70,28 @@ public class OnTheFlyCreator extends OpMode {
 
             //Trigger slow-mo
             if (gamepad1.x & !lastXButton) slomo = !slomo;
-            if (gamepad1.x) lastXButton = true;
-            else lastXButton = false;
+            lastXButton = gamepad1.x;
 
             if (i < RES) {
                 if (milliseconds >= i * (30000 / RES)) {
                     //Create MotionPoint
-                    if (slomo) points.add(new MotionPoint(new Vector2(-gamepad1.left_stick_x / 2, -gamepad1.left_stick_y / 2, gamepad1.right_stick_x / 2), 1 - (gamepad2.left_stick_x + 1) / 2, i));
-                    else points.add(new MotionPoint(new Vector2(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x), 1 - (gamepad2.left_stick_x + 1) / 2, i));
-                    i++;
+                    List<MotorPoint> mPoints = new ArrayList<>();
+                    mPoints.add(new MotorPoint(MovingPart.MOTOR, "leftB", (float) OpModeGeneral.leftBack.getPower()));
+                    mPoints.add(new MotorPoint(MovingPart.MOTOR, "leftF", (float) OpModeGeneral.leftFront.getPower()));
+                    mPoints.add(new MotorPoint(MovingPart.MOTOR, "rightB", (float) OpModeGeneral.rightBack.getPower()));
+                    mPoints.add(new MotorPoint(MovingPart.MOTOR, "rightF", (float) OpModeGeneral.rightFront.getPower()));
+                    mPoints.add(new MotorPoint(MovingPart.MOTOR, "lifter", (float) OpModeGeneral.lifter.getPower()));
+                    mPoints.add(new MotorPoint(MovingPart.SERVO, "grabberL", (float) OpModeGeneral.grabberL.getPosition()));
+                    mPoints.add(new MotorPoint(MovingPart.SERVO, "grabberR", (float) OpModeGeneral.grabberR.getPosition()));
+                    points.add(new MotionPoint(mPoints));
                 }
             }
 
             //Move
             if (slomo) OpModeGeneral.mecanumMove(-gamepad1.left_stick_x/2, -gamepad1.left_stick_y/2, gamepad1.right_stick_x/2, false);
             else OpModeGeneral.mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x, false);
-            OpModeGeneral.grabber.setPosition(1 - (gamepad2.left_stick_x + 1) / 2);
+
+            //Grab
 
             //Display data on screen
             telemetry.addData("Time:", milliseconds);
@@ -152,18 +162,19 @@ public class OnTheFlyCreator extends OpMode {
             obj = new FileWriter(output);
             buffered = new BufferedWriter(obj);
             for (MotionPoint mtmp : points) {
-                DecimalFormat format = new DecimalFormat("0.000");
-                float _x = mtmp.vec.x;
-                float _y = mtmp.vec.y;
-                float _rot = mtmp.vec.rot;
-                float _grab = mtmp.grabber;
-                int _order = mtmp.order;
-                String line = "M:"
-                        + format.format(_x) +","
-                        + format.format(_y)+","
-                        + format.format(_rot)+","
-                        + format.format(_grab) +","
-                        + _order;
+                String line = "";
+                for (MotorPoint mp : mtmp.points)
+                {
+                    switch (mp.part)
+                    {
+                        case MOTOR:
+                            line += "M:" + mp.name + ":" + mp.value + "|";
+                            break;
+                        case SERVO:
+                            line += "S:" + mp.name + ":" + mp.value + "|";
+                            break;
+                    }
+                }
                 buffered.write(line);
                 buffered.newLine();
             }

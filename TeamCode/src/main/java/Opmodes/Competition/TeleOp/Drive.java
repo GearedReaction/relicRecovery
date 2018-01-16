@@ -33,10 +33,7 @@ public class Drive extends OpMode {
         if (slomo) OpModeGeneral.mecanumMove(-gamepad1.left_stick_x/2, -gamepad1.left_stick_y/2, gamepad1.right_stick_x/2, !reverse);
         else OpModeGeneral.mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x, !reverse);
 
-        //Compress or expand the grabber
-        OpModeGeneral.grabber.setPosition(1-(gamepad2.right_stick_x+1)/2);
-
-        //Expand the lifter
-        OpModeGeneral.lifter.setPower(-gamepad2.left_stick_y);
+        //Control Grabber (and lifter)
+        OpModeGeneral.grab(gamepad2.right_stick_x,-gamepad2.left_stick_y, gamepad2.a);
     }
 }

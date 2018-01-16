@@ -52,7 +52,7 @@ public class MoveToSafeRedTop extends OpMode {
         };
         openServo = new TimerTask() {
             public void run() {
-                OpModeGeneral.grabber.setPosition(1);
+              //  OpModeGeneral.grabber.setPosition(1);
             }
         };
 
@@ -60,7 +60,7 @@ public class MoveToSafeRedTop extends OpMode {
         stopAll = new TimerTask(){
             public void run() {
                 OpModeGeneral.tankMove(0, 0, false);
-                OpModeGeneral.grabber.setPosition(0.5);
+               // OpModeGeneral.grabber.setPosition(0.5);
                 stage1Complete = true;
             }
         };

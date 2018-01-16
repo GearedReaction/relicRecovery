@@ -7,6 +7,8 @@ import android.os.Environment;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.vuforia.Image;
 
 import java.io.BufferedReader;
@@ -19,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import General.DataType.MotionPoint;
+import General.DataType.MotorPoint;
+import General.DataType.MovingPart;
 import General.DataType.RGB;
 import General.DataType.Vector2;
 import General.Utility.OpModeGeneral;
@@ -48,9 +52,8 @@ public class OnTheFlyReader extends OpMode {
     }
 
     public void start() {
-
-
         //Determine which column to use
+        loadConfig();
         int pictograph = OpModeGeneral.camera.getVuMark();
         if (pictograph == -1) filename = "test.mtmp";
         else
@@ -80,19 +83,24 @@ public class OnTheFlyReader extends OpMode {
             }
             if (i >= 0 && i < motionPoints.size() - 1) {
                 MotionPoint currentPoint = motionPoints.get(i);
-                Vector2 vec = currentPoint.vec;
-                OpModeGeneral.mecanumMove(vec.x, vec.y, vec.rot, false);
-                OpModeGeneral.grabber.setPosition(currentPoint.grabber);
-                milliseconds = System.currentTimeMillis() - startTimeSinceEpoch;
-                telemetry.addData("MPoint", "x: " + currentPoint.vec.x + "y: " + currentPoint.vec.y + "rot: " + currentPoint.vec.rot);
-                telemetry.addData("Grabber", currentPoint.grabber);
-                telemetry.addData("order", currentPoint.order);
-                telemetry.addData("Time:", milliseconds);
-                telemetry.addData("i", i);
+                for (MotorPoint m : currentPoint.points)
+                {
+                    switch (m.part)
+                    {
+                        case MOTOR:
+                            DcMotor mtr = hardwareMap.dcMotor.get(m.part.name());
+                            mtr.setPower(m.value);
+                            break;
+                        case SERVO:
+                            Servo srv = hardwareMap.servo.get(m.part.name());
+                            srv.setPosition(m.value);
+                            break;
+                    }
+                }
             }
+
             if (i >= motionPoints.size()) {
                 OpModeGeneral.mecanumMove(0, 0, 0, false);
-                OpModeGeneral.grabber.setPosition(0.5);
             }
         }
     }
@@ -106,21 +114,26 @@ public class OnTheFlyReader extends OpMode {
             BufferedReader reader = new BufferedReader(fileReader);
 
             while((line = reader.readLine()) != null) {
-                //M:x,y,r,o
+                List<MotorPoint> outputs = new ArrayList<>();
                 if (line.startsWith("M:"))
                 {
-                    line = line.substring(2);
-                    List<String> strings = Arrays.asList(line.split("\\s*,\\s*"));
-                    if (strings.size() >= 5) {
-                        float x = Float.parseFloat(strings.get(0));
-                        float y = Float.parseFloat(strings.get(1));
-                        float rot = Float.parseFloat(strings.get(2));
-                        float grabber = Float.parseFloat(strings.get(3));
-                        int order = Integer.parseInt(strings.get(4));
-                        MotionPoint mp = new MotionPoint(new Vector2(x,y,rot),grabber,order);
-                        movement.add(mp);
+                    List<String> strings = Arrays.asList(line.split("\\s*|\\s*"));
+                    for (String s : strings)
+                    {
+                        MotorPoint mpt = new MotorPoint();
+                        List<String> stringyboi = Arrays.asList(s.split("\\s*:\\s*"));
+                        if (stringyboi.size() == 3)
+                        {
+                            if (stringyboi.get(0).equals("M")) mpt.part = MovingPart.MOTOR;
+                            else mpt.part = MovingPart.SERVO;
+
+                            mpt.name = stringyboi.get(1);
+                            mpt.value = Float.parseFloat(stringyboi.get(2));
+                        }
+                        outputs.add(mpt);
                     }
                 }
+                 movement.add(new MotionPoint(outputs));
             }
         }
         catch (FileNotFoundException e)

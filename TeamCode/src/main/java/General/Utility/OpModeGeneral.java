@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.I2cDevice;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Hardware;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
@@ -29,13 +30,14 @@ public class OpModeGeneral {
     public static DcMotor leftBack;
     public static DcMotor rightBack;
     public static DcMotor lifter;
-//  public static DcMotor extender;
 
     //Servos
-    public static Servo grabber;
+    public static Servo grabberL;
+    public static Servo grabberR;
 
     //Sensors
     public static VuforiaCamera camera;
+    public static ModernRoboticsRGB jewelColor;
 
 
     public static void allInit (HardwareMap hardwareMap) {
@@ -51,27 +53,38 @@ public class OpModeGeneral {
         rightFront = hardwareMap.dcMotor.get("rightF");
         rightBack = hardwareMap.dcMotor.get("rightB");
         lifter = hardwareMap.dcMotor.get("lifter");
-//      extender = hardwareMap.dcMotor.get("extender");
     }
 
     public static void servoInit(HardwareMap hardwareMap) {
-        grabber = hardwareMap.servo.get("grabber");
+        grabberL = hardwareMap.servo.get("grabberL");
+        grabberR = hardwareMap.servo.get("grabberR");
     }
 
     public static void sensorInit (HardwareMap hardwareMap) {
-
+        jewelColor = new ModernRoboticsRGB(hardwareMap, "jewelColor",)
     }
 
-    public static void cameraInit (HardwareMap hardwareMap)
-    {
+    public static void cameraInit (HardwareMap hardwareMap) {
         //Camera Init
         camera = new VuforiaCamera(hardwareMap);
         camera.initTracker();
     }
 
+    public static void grab (double servos, double lifterPower, boolean open) {
+        if (open)
+        {
+            OpModeGeneral.grabberL.setPosition(Range.clip(((-0.4 + 1) / 2), 0, 1));
+            OpModeGeneral.grabberR.setPosition(Range.clip(1 - ((-0.4 + 1) / 2), 0, 1));
+        }
+        else
+        {
+            OpModeGeneral.grabberL.setPosition(Range.clip(((servos + 1) / 2), 0, 1));
+            OpModeGeneral.grabberR.setPosition(Range.clip(1 - ((servos + 1) / 2), 0, 1));
+        }
+        OpModeGeneral.lifter.setPower(lifterPower);
+    }
 
-    public static void rawMove (double rightF, double rightB, double leftF, double leftB, boolean reverse)
-    {
+    public static void rawMove (double rightF, double rightB, double leftF, double leftB, boolean reverse) {
         int multiplier = reverse ? 1 : -1;
 
         leftFront.setPower(leftF * multiplier);
@@ -80,8 +93,7 @@ public class OpModeGeneral {
         rightBack.setPower(rightB * multiplier);
     }
 
-    public static void tankMove (double leftY, double rightY, boolean reverse)
-    {
+    public static void tankMove (double leftY, double rightY, boolean reverse) {
         int multiplier = reverse ? 1 : -1;
 
         leftFront.setPower(leftY * multiplier);
@@ -90,8 +102,7 @@ public class OpModeGeneral {
         rightBack.setPower(rightY * multiplier);
     }
 
-    public static void divisionDrive (double leftY, double rightX, boolean reverse)
-    {
+    public static void divisionDrive (double leftY, double rightX, boolean reverse) {
         double rightVector = leftY - rightX;
         double leftVector = rightX + leftY;
         double larger;
@@ -109,7 +120,6 @@ public class OpModeGeneral {
         rightFront.setPower(rightVector);
         rightBack.setPower(rightVector);
     }
-
 
     private static double _topLeft, _topRight, _bottomLeft, _bottomRight, _maxVector;
 

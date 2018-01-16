@@ -5,4 +5,6 @@ package General.DataType;
  */
 
 public enum MovingPart {
+    MOTOR,
+    SERVO
 }
