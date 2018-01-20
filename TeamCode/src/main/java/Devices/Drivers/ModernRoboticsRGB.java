@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.I2cDevice;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynch;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynchImpl;
+import java.lang.String;
 
 /**
  * Created by admin on 4/13/2017.
@@ -16,7 +17,7 @@ public class ModernRoboticsRGB {
     byte[] colorCcache;
 
     I2cDevice colorA;
-    I2cDeviceSynch colorAreader;
+    static I2cDeviceSynch colorAreader;
     I2cDeviceSynch colorCreader;
 
     boolean touchState = false;  //Tracks the last known state of the touch sensor
@@ -88,7 +89,7 @@ public class ModernRoboticsRGB {
     {
         colorAreader.write8(0x03, cmdValue);
     }
-    private int read(int location) { return colorAreader.read(location, 1)[0] & 0xFF; }
+    public int read(int location) { return colorAreader.read(location, 1)[0] & 0xFF; }
 
 
 }

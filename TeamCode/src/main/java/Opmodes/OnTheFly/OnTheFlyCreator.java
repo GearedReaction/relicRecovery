@@ -33,132 +33,63 @@ import General.DataType.MovingPart;
 
 public class OnTheFlyCreator extends OpMode {
 
-    public static final int RES = 3000;
-    private long milliseconds;
-    private long startTimeSinceEpoch;
-    private List<MotionPoint> points = new ArrayList<>();
+    private static final int RES = 30000;
+
     private File fileDir = Environment.getExternalStorageDirectory();
-    private boolean saveIsReady;
-    private int fileID = 0;
-    private boolean saveStarted = false;
-    private boolean slomo = false;
-    private boolean lastXButton = false;
+    private Thread inputThread = new Thread(new UpdateThread());
+    private List<MotionPoint> points = new ArrayList<>();
     private String fileName = "test.mtmp";
+    private boolean saveStarted = false;
+    private boolean lastXButton = false;
     private boolean frontORback = false;
     private boolean redORblue = false;
+    private long startTimeSinceEpoch;
+    private boolean slomo = false;
+    private boolean saveIsReady;
+    private boolean lastAButton;
+    private long milliseconds;
+    private boolean finished;
+    private boolean reverse;
+    private int fileID = 0;
     private int column = 0;
-
-
-
-    public void init()
-    {
-        OpModeGeneral.motorInit(hardwareMap);
-        OpModeGeneral.servoInit(hardwareMap);
-    }
-
-
-    public void start()
-    {
-        startTimeSinceEpoch = System.currentTimeMillis();
-        milliseconds = 0;
-    }
     private int i = 0;
-    public void loop()
-    {
-        //Record Data
-        if (milliseconds <= 30000) {
 
-            //Trigger slow-mo
-            if (gamepad1.x & !lastXButton) slomo = !slomo;
-            lastXButton = gamepad1.x;
+    private class UpdateThread implements Runnable {
 
-            if (i < RES) {
-                if (milliseconds >= i * (30000 / RES)) {
-                    //Create MotionPoint
-                    List<MotorPoint> mPoints = new ArrayList<>();
-                    mPoints.add(new MotorPoint(MovingPart.MOTOR, "leftB", (float) OpModeGeneral.leftBack.getPower()));
-                    mPoints.add(new MotorPoint(MovingPart.MOTOR, "leftF", (float) OpModeGeneral.leftFront.getPower()));
-                    mPoints.add(new MotorPoint(MovingPart.MOTOR, "rightB", (float) OpModeGeneral.rightBack.getPower()));
-                    mPoints.add(new MotorPoint(MovingPart.MOTOR, "rightF", (float) OpModeGeneral.rightFront.getPower()));
-                    mPoints.add(new MotorPoint(MovingPart.MOTOR, "lifter", (float) OpModeGeneral.lifter.getPower()));
-                    mPoints.add(new MotorPoint(MovingPart.SERVO, "grabberL", (float) OpModeGeneral.grabberL.getPosition()));
-                    mPoints.add(new MotorPoint(MovingPart.SERVO, "grabberR", (float) OpModeGeneral.grabberR.getPosition()));
-                    points.add(new MotionPoint(mPoints));
-                }
-            }
-
-            //Move
-            if (slomo) OpModeGeneral.mecanumMove(-gamepad1.left_stick_x/2, -gamepad1.left_stick_y/2, gamepad1.right_stick_x/2, false);
-            else OpModeGeneral.mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x, false);
-
-            //Grab
-
-            //Display data on screen
-            telemetry.addData("Time:", milliseconds);
-            telemetry.addData("MPointCount:", points.size());
-            telemetry.addData("MPoint:", -gamepad1.left_stick_x + " : " + -gamepad1.left_stick_y + " : " + -gamepad1.right_stick_x);
-
-            //Update the current millisecond value
-            milliseconds = System.currentTimeMillis() - startTimeSinceEpoch;
-        }
-
-        //Save File
-        else
-        {
-            if (!saveIsReady)
+        @Override
+        public void run(){
+            while (true)
             {
-                telemetry.addData("Ready To Save", 0);
-                telemetry.addData("File Name", fileName);
-                telemetry.addData("Column", column);
-                telemetry.addData("frontORback", frontORback);
-                telemetry.addData("redORblue", redORblue);
-
-                if (gamepad1.a) fileName = "test.mtmp";
-
-
-                if (gamepad1.dpad_up) frontORback = true;
-                else if (gamepad1.dpad_down) frontORback = false;
-                if (gamepad1.dpad_left) redORblue = false;
-                else if (gamepad1.dpad_right) redORblue = true;
-
-                if (gamepad1.x) column = 0;
-                else if (gamepad1.y) column = 1;
-                else if (gamepad1.b) column = 2;
-
-                if (gamepad1.left_bumper)
-                {
-                    fileName = "";
-                    if (column == 0) fileName += "Left";
-                    else if (column == 1) fileName += "Center";
-                    else if (column == 2) fileName += "Right";
-                    fileName += redORblue ? "Red" : "Blue";
-                    fileName += frontORback ? "F" : "B";
-                    fileName += ".mtmp";
-                    telemetry.addData("FileTest", fileName);
+                try {
+                    if (i < RES) {
+                        writePoint();
+                        inputThread.sleep(30000 / RES);
+                        i++;
+                    }
+                    else {
+                        finished = true;
+                        break;
+                    }
                 }
-
-                if (gamepad1.start)
-                {
-                    saveIsReady = true;
+                catch (InterruptedException e) {
+                    telemetry.addData("ERROR", e.getStackTrace());
                 }
             }
-            else if (!saveStarted) saveFile(fileName);
-
         }
     }
 
-    private void saveFile(String fileName)
-    {
-        saveStarted = true;
-        FileWriter obj = null;
-        File output;
+    private void saveFile(String fileName) {
         BufferedWriter buffered;
+        FileWriter obj = null;
+        saveStarted = true;
+        File output;
+
+
         try {
             File dir = new File(fileDir + "/robotSaves/");
-            if (!(dir.exists() && dir.isDirectory())) {
-                dir.mkdirs();
-            }
-            output = new File(fileDir + "/robotSaves/" + fileName);
+            if (!(dir.exists() && dir.isDirectory()))  dir.mkdirs();
+            String name = fileDir + "/robotSaves" + fileName;
+            output = new File(name);
             obj = new FileWriter(output);
             buffered = new BufferedWriter(obj);
             for (MotionPoint mtmp : points) {
@@ -204,4 +135,78 @@ public class OnTheFlyCreator extends OpMode {
             }
         }
     }
+
+    private void writePoint() {
+        List<MotorPoint> mPoints = new ArrayList<MotorPoint>() {{
+            new MotorPoint(MovingPart.MOTOR, "leftB", (float) OpModeGeneral.leftBack.getPower());
+            new MotorPoint(MovingPart.MOTOR, "leftF", (float) OpModeGeneral.leftFront.getPower());
+            new MotorPoint(MovingPart.MOTOR, "rightB", (float) OpModeGeneral.rightBack.getPower());
+            new MotorPoint(MovingPart.MOTOR, "rightF", (float) OpModeGeneral.rightFront.getPower());
+            new MotorPoint(MovingPart.MOTOR, "lifter", (float) OpModeGeneral.lifter.getPower());
+            new MotorPoint(MovingPart.SERVO, "grabberL", (float) OpModeGeneral.grabberL.getPosition());
+            new MotorPoint(MovingPart.SERVO, "grabberR", (float) OpModeGeneral.grabberR.getPosition());
+        }};
+        points.add(new MotionPoint(mPoints));
+    }
+
+    public void init() {
+        OpModeGeneral.motorInit(hardwareMap);
+        OpModeGeneral.servoInit(hardwareMap);
+    }
+
+    public void loop() {
+        //Record Data
+        if (!finished) {
+            OpModeGeneral.MecanumControl(gamepad1, gamepad2);
+            if (gamepad1.back) inputThread.start();
+        }
+
+        //Save File
+        else
+        {
+            if (!saveIsReady)
+            {
+                telemetry.addData("Ready To Save", 0);
+                telemetry.addData("File Name", fileName);
+                telemetry.addData("Column", column);
+                telemetry.addData("frontTrueBackFalse", frontORback);
+                telemetry.addData("redTrueBackFalse", redORblue);
+
+                if (gamepad1.a) fileName = "test.mtmp";
+                if (gamepad1.dpad_down) frontORback = false;
+                if (gamepad1.dpad_right) redORblue = false;
+                if (gamepad1.dpad_left) redORblue = true;
+                if (gamepad1.dpad_up) frontORback = true;
+                if (gamepad1.x) column = 0;
+                if (gamepad1.y) column = 1;
+                if (gamepad1.b) column = 2;
+
+                if (gamepad1.left_bumper)
+                {
+                    fileName = "";
+                    if (column == 0) fileName += "Left";
+                    else if (column == 1) fileName += "Center";
+                    else if (column == 2) fileName += "Right";
+                    fileName += redORblue ? "Red" : "Blue";
+                    fileName += frontORback ? "F" : "B";
+                    fileName += ".mtmp";
+                    telemetry.addData("FileTest", fileName);
+                }
+
+                if (gamepad1.start) saveIsReady = true;
+            }
+            else if (!saveStarted) saveFile(fileName);
+
+        }
+    }
+
+
+
+
+
+
+
+
+
+
 }
