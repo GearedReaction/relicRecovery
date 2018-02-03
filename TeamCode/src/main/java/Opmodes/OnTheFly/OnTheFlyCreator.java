@@ -16,8 +16,10 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.io.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import General.DataType.MotionPoint;
 import General.DataType.MotorPoint;
@@ -33,20 +35,19 @@ import General.DataType.MovingPart;
 
 public class OnTheFlyCreator extends OpMode {
 
-    private static final int RES = 30000;
-
     private File fileDir = Environment.getExternalStorageDirectory();
     private Thread inputThread = new Thread(new UpdateThread());
-    private List<MotionPoint> points = new ArrayList<>();
+    private ConcurrentLinkedQueue<List<Float>> points = new ConcurrentLinkedQueue<>();
     private String fileName = "test.mtmp";
     private boolean saveStarted = false;
     private boolean frontORback = false;
     private boolean redORblue = false;
     private boolean saveIsReady;
     private boolean finished;
-    private int saveTick = 0;
     private int column = 0;
     private int i = 0;
+    int interval = 1;
+    long nextTime = System.currentTimeMillis() + interval;
 
     public void init() {
         OpModeGeneral.motionInit(hardwareMap);
@@ -56,19 +57,26 @@ public class OnTheFlyCreator extends OpMode {
 
         @Override
         public void run(){
-            while (i < RES)
+            while (i < 30000)
             {
-                try {
-                    writePoint();
-                    inputThread.sleep(30000 / RES);
-                    i++;
-                }
-                catch (InterruptedException e) {
-                    telemetry.addData("ERROR", e.getStackTrace());
-                }
+                while (nextTime - System.currentTimeMillis() > 0)
+                    ;
+                write();
+                nextTime += interval;
             }
             finished = true;
         }
+    }
+
+    private void write()
+    {
+            new Thread(new Runnable() {
+                public void run() {
+                    writePoint();
+                }
+            }).start();
+            OpModeGeneral.MecanumControl(gamepad1, gamepad2);
+            i++;
     }
 
     private void saveFile(String fileName) {
@@ -89,14 +97,14 @@ public class OnTheFlyCreator extends OpMode {
             obj = new FileWriter(output);
             buffered = new BufferedWriter(obj);
 
-            for (MotionPoint mtmp : points) {
-                String line = "";
-                for (MotorPoint mp : mtmp.points)
-                {
-                    line += mp.value + ":";
-                    saveTick++;
+            Iterator<List<Float>> itr = points.iterator();
+            while (itr.hasNext()) {
+                StringBuilder line = new StringBuilder("");
+                for (Float value : itr.next()) {
+                    line.append(value);
+                    line.append(":");
                 }
-                buffered.write(line);
+                buffered.write(line.toString());
                 buffered.newLine();
             }
         }
@@ -132,29 +140,26 @@ public class OnTheFlyCreator extends OpMode {
     }
 
     private void writePoint() {
-        List<MotorPoint> mPoints = new ArrayList<>();
-        mPoints.add(new MotorPoint(MovingPart.MOTOR, "leftB", (float) OpModeGeneral.leftBack.getPower()));
-        mPoints.add(new MotorPoint(MovingPart.MOTOR, "leftF", (float) OpModeGeneral.leftFront.getPower()));
-        mPoints.add(new MotorPoint(MovingPart.MOTOR, "rightB", (float) OpModeGeneral.rightBack.getPower()));
-        mPoints.add(new MotorPoint(MovingPart.MOTOR, "rightF", (float) OpModeGeneral.rightFront.getPower()));
-        mPoints.add(new MotorPoint(MovingPart.MOTOR, "lifter", (float) OpModeGeneral.lifter.getPower()));
-        mPoints.add(new MotorPoint(MovingPart.SERVO, "grabberL", (float) OpModeGeneral.grabberL.getPosition()));
-        mPoints.add(new MotorPoint(MovingPart.SERVO, "grabberR", (float) OpModeGeneral.grabberR.getPosition()));
-        mPoints.add(new MotorPoint(MovingPart.SERVO, "grabberLB", (float) OpModeGeneral.grabberLB.getPosition()));
-        mPoints.add(new MotorPoint(MovingPart.SERVO, "grabberRB", (float) OpModeGeneral.grabberRB.getPosition()));
-        points.add(new MotionPoint(mPoints));
+        List<Float> values = new ArrayList<>();
+        values.add((float) OpModeGeneral.leftBack.getPower());
+        values.add((float) OpModeGeneral.leftFront.getPower());
+        values.add((float) OpModeGeneral.rightBack.getPower());
+        values.add((float) OpModeGeneral.rightFront.getPower());
+        values.add((float) OpModeGeneral.lifter.getPower());
+        values.add((float) OpModeGeneral.grabberL.getPosition());
+        values.add((float) OpModeGeneral.grabberR.getPosition());
+        values.add((float) OpModeGeneral.grabberLB.getPosition());
+        values.add((float) OpModeGeneral.grabberRB.getPosition());
+        points.offer(values);
     }
 
     public void loop() {
-        //Record Data
         if (!finished) {
-            OpModeGeneral.MecanumControl(gamepad1, gamepad2);
             telemetry.addData("Tick", i);
             telemetry.addData("Count", points.size());
         }
-
         //Save File
-        else
+        if (finished)
         {
             if (!saveIsReady)
             {
@@ -187,7 +192,13 @@ public class OnTheFlyCreator extends OpMode {
 
                 if (gamepad1.start) saveIsReady = true;
             }
-            else if (!saveStarted) saveFile(fileName);
+            else if (!saveStarted) {
+                new Thread(new Runnable() {
+                    public void run() {
+                        saveFile(fileName);
+                    }
+                });
+            }
 
         }
     }

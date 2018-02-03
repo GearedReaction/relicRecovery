@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 
 import General.Utility.OpModeGeneral;
 import General.DataType.MotionPoint;
@@ -38,6 +39,10 @@ public class OnTheFlyReader extends OpMode {
     private boolean redORblue = true;
     private boolean ready = false;
     private String filename = "";
+    int k = 0;
+
+    int interval = 1;
+    long nextTime = System.currentTimeMillis() + interval;
 
     private ConcurrentLinkedQueue<List<Float>> mpoints = new ConcurrentLinkedQueue<>();
 
@@ -72,15 +77,25 @@ public class OnTheFlyReader extends OpMode {
         @Override
         public void run(){
             while (!mpoints.isEmpty()) {
-                move(mpoints.poll());
-                try {
-                    driveThread.sleep(1);
-                } catch (InterruptedException e) {
-                    telemetry.addData("Thing", e.getStackTrace());
-                }
+                while (nextTime - System.currentTimeMillis() > 0)
+                    ;
+                read();
+                nextTime += interval;
             }
             OpModeGeneral.stopAllMotors();
         }
+    }
+
+    private void read()
+    {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                telemetry.addData("Tick", k);
+            }
+        });
+        move(mpoints.poll());
+        k++;
     }
 
     private List<String> getFile (String fileName) {
@@ -165,6 +180,11 @@ public class OnTheFlyReader extends OpMode {
             driveThread.start();
             ready = false;
         }
+    }
+
+    public void stop()
+    {
+        driveThread.interrupt();
     }
 
 
