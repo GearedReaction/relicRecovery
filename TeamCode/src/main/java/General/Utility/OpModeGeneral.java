@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.util.Range;
 
 import Devices.Drivers.ModernRoboticsRGB;
 import Devices.Drivers.VuforiaCamera;
+import General.DataType.MotionPoint;
 import General.DataType.RGB;
 
 /**
@@ -19,12 +20,16 @@ import General.DataType.RGB;
 
 public class OpModeGeneral {
 
+    // Data
+    public static final int DEVICECOUNT = 7;
+
     // Local
     private static double _topLeft, _topRight, _bottomLeft, _bottomRight, _maxVector;
     private static boolean lastAButton = false;
     private static boolean lastXButton = false;
     private static boolean reverse = false;
     private static boolean slomo = false;
+
 
     // Sensors
     public static ModernRoboticsRGB jewelColor;
@@ -40,6 +45,10 @@ public class OpModeGeneral {
     // Servos
     public static Servo grabberL;
     public static Servo grabberR;
+    public static Servo grabberLB;
+    public static Servo grabberRB;
+
+
 
 
 
@@ -54,6 +63,11 @@ public class OpModeGeneral {
         camera.initTracker();
     }
 
+    public static void motionInit (HardwareMap hardwareMap) {
+        motorInit(hardwareMap);
+        servoInit(hardwareMap);
+    }
+
     public static void motorInit (HardwareMap hardwareMap) {
         leftFront = hardwareMap.dcMotor.get("leftF");
         leftBack = hardwareMap.dcMotor.get("leftB");
@@ -65,6 +79,8 @@ public class OpModeGeneral {
     public static void servoInit(HardwareMap hardwareMap) {
         grabberL = hardwareMap.servo.get("grabberL");
         grabberR = hardwareMap.servo.get("grabberR");
+        grabberLB = hardwareMap.servo.get("grabberLB");
+        grabberRB = hardwareMap.servo.get("grabberRB");
     }
 
     public static void allInit (HardwareMap hardwareMap) {
@@ -73,6 +89,8 @@ public class OpModeGeneral {
         servoInit(hardwareMap);
         cameraInit(hardwareMap);
     }
+
+
 
 
 
@@ -205,6 +223,20 @@ public class OpModeGeneral {
         mecanumMove(a, b, 0,false);
     }
 
+    public static void driveMotionPoint (MotionPoint mp) {
+        leftBack.setPower(mp.points.get(0).value);
+        leftFront.setPower(mp.points.get(1).value);
+        rightBack.setPower(mp.points.get(2).value);
+        rightFront.setPower(mp.points.get(3).value);
+        lifter.setPower(mp.points.get(4).value);
+        grabberL.setPosition(mp.points.get(5).value);
+        grabberR.setPosition(mp.points.get(6).value);
+        grabberLB.setPosition(mp.points.get(7).value);
+        grabberRB.setPosition(mp.points.get(8).value);
+
+    }
+
+
 
     // Process Image
     public static Bitmap[][] splitBitmap(Bitmap bitmap, int xCount, int yCount) {
@@ -267,19 +299,25 @@ public class OpModeGeneral {
         return n;
     }
 
-
-    // Control
-    public static void grab (double servos, double lifterPower, boolean open) {
-        if (open)
-        {
+    public static void grab (double topServos, double bottomServos, double lifterPower, boolean open, boolean openBottom) {
+        // Top
+        if (open) {
             OpModeGeneral.grabberL.setPosition(Range.clip(((-0.4 + 1) / 2), 0, 1));
             OpModeGeneral.grabberR.setPosition(Range.clip(1 - ((-0.4 + 1) / 2), 0, 1));
+        } else {
+            OpModeGeneral.grabberL.setPosition(Range.clip(((topServos + 1) / 2), 0, 1));
+            OpModeGeneral.grabberR.setPosition(Range.clip(1 - ((topServos + 1) / 2), 0, 1));
         }
-        else
-        {
-            OpModeGeneral.grabberL.setPosition(Range.clip(((servos + 1) / 2), 0, 1));
-            OpModeGeneral.grabberR.setPosition(Range.clip(1 - ((servos + 1) / 2), 0, 1));
+
+        // Bottom
+        if (openBottom) {
+            OpModeGeneral.grabberRB.setPosition(Range.clip(((-0.4 + 1) / 2), 0, 1));
+            OpModeGeneral.grabberLB.setPosition(Range.clip(1 - ((-0.4 + 1) / 2), 0, 1));
+        } else {
+            OpModeGeneral.grabberRB.setPosition(Range.clip(((bottomServos + 1) / 2), 0, 1));
+            OpModeGeneral.grabberLB.setPosition(Range.clip(1 - ((bottomServos + 1) / 2), 0, 1));
         }
+
         OpModeGeneral.lifter.setPower(lifterPower);
     }
 
@@ -320,7 +358,8 @@ public class OpModeGeneral {
         else mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x, !reverse);
 
         //Control Grabber (and lifter)
-        grab(gamepad2.right_stick_x,-gamepad2.left_stick_y, gamepad2.right_bumper);
+        double lifterPower = gamepad2.right_trigger-gamepad2.left_trigger;
+        grab(-gamepad2.right_stick_x, gamepad2.left_stick_x, lifterPower, gamepad2.right_stick_button, gamepad2.left_stick_button);
     }
 
 

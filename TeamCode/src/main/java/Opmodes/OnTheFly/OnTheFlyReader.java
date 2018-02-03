@@ -5,8 +5,6 @@ import android.os.Environment;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Servo;
 
 import java.io.FileNotFoundException;
 import java.io.BufferedReader;
@@ -17,6 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import General.Utility.OpModeGeneral;
 import General.DataType.MotionPoint;
@@ -32,43 +31,66 @@ import General.DataType.MovingPart;
 public class OnTheFlyReader extends OpMode {
 
     private File dir = Environment.getExternalStorageDirectory();
-    private Thread inputThread = new Thread(new UpdateThread());
+    private Thread driveThread = new Thread(new UpdateThread());
+    private Thread fileThread = new Thread(new LoadThread());
     private List<MotionPoint> motionPoints;
-    private boolean fileNotFound = false;
     private boolean frontORback = true;
     private boolean redORblue = true;
+    private boolean ready = false;
     private String filename = "";
-    private int i = 0;
 
+    private ConcurrentLinkedQueue<List<Float>> mpoints = new ConcurrentLinkedQueue<>();
 
-    private List<MotionPoint> loadFile(String fileName) {
-        List<MotionPoint> movement = new ArrayList<MotionPoint>();
-        String line;
+    private void loadFile(String fileName) {
+        int j = 0;
+        for (String ln : getFile(fileName))
+        {
+            List<String> devices = Arrays.asList(ln.split(":"));
+            List<Float> vals = new ArrayList<>();
+            if (devices.size() >= OpModeGeneral.DEVICECOUNT)
+                for (int i = 0; i < 9; i++) vals.add(Float.parseFloat(devices.get(i)));
+            mpoints.offer(vals);
+            if (j == 5) ready = true;
+            j++;
+        }
+    }
+
+    private void move (List<Float> devices) {
+        OpModeGeneral.leftBack.setPower(devices.get(0));
+        OpModeGeneral.leftFront.setPower(devices.get(1));
+        OpModeGeneral.rightBack.setPower(devices.get(2));
+        OpModeGeneral.rightFront.setPower(devices.get(3));
+        OpModeGeneral.lifter.setPower(devices.get(4));
+        OpModeGeneral.grabberL.setPosition(devices.get(5));
+        OpModeGeneral.grabberR.setPosition(devices.get(6));
+        OpModeGeneral.grabberLB.setPosition(devices.get(7));
+        OpModeGeneral.grabberRB.setPosition(devices.get(8));
+    }
+
+    private class UpdateThread implements Runnable {
+
+        @Override
+        public void run(){
+            while (!mpoints.isEmpty()) {
+                move(mpoints.poll());
+                try {
+                    driveThread.sleep(1);
+                } catch (InterruptedException e) {
+                    telemetry.addData("Thing", e.getStackTrace());
+                }
+            }
+            OpModeGeneral.stopAllMotors();
+        }
+    }
+
+    private List<String> getFile (String fileName) {
+        List<String> lines = new ArrayList<>();
         try {
             FileReader fileReader = new FileReader(fileName);
             BufferedReader reader = new BufferedReader(fileReader);
-
-            while((line = reader.readLine()) != null) {
-                List<MotorPoint> outputs = new ArrayList<>();
-                if (line.startsWith("M:"))
-                {
-                    List<String> strings = Arrays.asList(line.split("\\s*|\\s*"));
-                    for (String s : strings)
-                    {
-                        MotorPoint mpt = new MotorPoint();
-                        List<String> stringyboi = Arrays.asList(s.split("\\s*:\\s*"));
-                        if (stringyboi.size() == 3)
-                        {
-                            if (stringyboi.get(0).equals("M")) mpt.part = MovingPart.MOTOR;
-                            else mpt.part = MovingPart.SERVO;
-
-                            mpt.name = stringyboi.get(1);
-                            mpt.value = Float.parseFloat(stringyboi.get(2));
-                        }
-                        outputs.add(mpt);
-                    }
-                }
-                 movement.add(new MotionPoint(outputs));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
             }
         }
         catch (FileNotFoundException e)
@@ -83,49 +105,25 @@ public class OnTheFlyReader extends OpMode {
             telemetry.addData("IO EXCEPTION", 0);
             return null;
         }
-
-        return movement;
+        return lines;
     }
 
-    private class UpdateThread implements Runnable {
-
+    private class LoadThread implements Runnable {
         @Override
         public void run(){
-            while (true)
-            {
-                try {
-                    if (i < motionPoints.size()) {
-                        drivePoint(i);
-                        inputThread.sleep(30000 / motionPoints.size());
-                        i++;
-                    }
-                    else {
-                        OpModeGeneral.stopAllMotors();
-                        break;
-                    }
-                }
-                catch (InterruptedException e) {
-                    telemetry.addData("ERROR", e.getStackTrace());
-                }
+            telemetry.addData("Entered loading thread",0);
+            //loadConfig();
+            int pictograph = OpModeGeneral.camera.getVuMark();
+            if (pictograph == -1) filename = "test.mtmp";
+            else {
+                if (pictograph == 0) filename += "Left";
+                else if (pictograph == 1) filename += "Center";
+                else if (pictograph == 2) filename += "Right";
+                filename += redORblue ? "Red" : "Blue";
+                filename += frontORback ? "F" : "B";
+                filename += ".mtmp";
             }
-        }
-    }
-
-    private void drivePoint(int val) {
-        MotionPoint currentPoint = motionPoints.get(val);
-        for (MotorPoint m : currentPoint.points)
-        {
-            switch (m.part)
-            {
-                case MOTOR:
-                    DcMotor mtr = hardwareMap.dcMotor.get(m.part.name());
-                    mtr.setPower(m.value);
-                    break;
-                case SERVO:
-                    Servo srv = hardwareMap.servo.get(m.part.name());
-                    srv.setPosition(m.value);
-                    break;
-            }
+            loadFile(dir + "/robotSaves/" + filename);
         }
     }
 
@@ -154,32 +152,20 @@ public class OnTheFlyReader extends OpMode {
     }
 
     public void start() {
-        //Determine which column to use
-        loadConfig();
-        int pictograph = OpModeGeneral.camera.getVuMark();
-        if (pictograph == -1) filename = "test.mtmp";
-        else
-        {
-            if (pictograph == 0) filename += "Left";
-            else if (pictograph == 1) filename += "Center";
-            else if (pictograph == 2) filename += "Right";
-            filename += redORblue ? "Red" : "Blue";
-            filename += frontORback ? "F" : "B";
-            filename += ".mtmp";
-        }
-        telemetry.addData("File",filename);
-        motionPoints = loadFile(dir + "/robotSaves/" + filename);
-        if (motionPoints == null) fileNotFound = true;
-
+        fileThread.start();
     }
 
     public void init() {
-        OpModeGeneral.motorInit(hardwareMap);
-        OpModeGeneral.servoInit(hardwareMap );
+        OpModeGeneral.motionInit(hardwareMap);
         OpModeGeneral.cameraInit(hardwareMap);
     }
 
-    public void loop() {}
+    public void loop() {
+        if (ready) {
+            driveThread.start();
+            ready = false;
+        }
+    }
 
 
 }

@@ -8,8 +8,7 @@ import General.Utility.OpModeGeneral;
 public class Drive extends OpMode {
 
     public void init() {
-        OpModeGeneral.motorInit(hardwareMap);
-        OpModeGeneral.servoInit(hardwareMap);
+        OpModeGeneral.motionInit(hardwareMap);
     }
 
     public void loop() {

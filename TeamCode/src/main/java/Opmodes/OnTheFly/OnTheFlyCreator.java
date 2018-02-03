@@ -40,71 +40,61 @@ public class OnTheFlyCreator extends OpMode {
     private List<MotionPoint> points = new ArrayList<>();
     private String fileName = "test.mtmp";
     private boolean saveStarted = false;
-    private boolean lastXButton = false;
     private boolean frontORback = false;
     private boolean redORblue = false;
-    private long startTimeSinceEpoch;
-    private boolean slomo = false;
     private boolean saveIsReady;
-    private boolean lastAButton;
-    private long milliseconds;
     private boolean finished;
-    private boolean reverse;
-    private int fileID = 0;
+    private int saveTick = 0;
     private int column = 0;
     private int i = 0;
+
+    public void init() {
+        OpModeGeneral.motionInit(hardwareMap);
+    }
 
     private class UpdateThread implements Runnable {
 
         @Override
         public void run(){
-            while (true)
+            while (i < RES)
             {
                 try {
-                    if (i < RES) {
-                        writePoint();
-                        inputThread.sleep(30000 / RES);
-                        i++;
-                    }
-                    else {
-                        finished = true;
-                        break;
-                    }
+                    writePoint();
+                    inputThread.sleep(30000 / RES);
+                    i++;
                 }
                 catch (InterruptedException e) {
                     telemetry.addData("ERROR", e.getStackTrace());
                 }
             }
+            finished = true;
         }
     }
 
     private void saveFile(String fileName) {
-        BufferedWriter buffered;
+        try { inputThread.join(); }
+        catch (InterruptedException e) { e.printStackTrace(); }
+
+        BufferedWriter buffered = null;
         FileWriter obj = null;
         saveStarted = true;
         File output;
 
-
         try {
             File dir = new File(fileDir + "/robotSaves/");
-            if (!(dir.exists() && dir.isDirectory()))  dir.mkdirs();
-            String name = fileDir + "/robotSaves" + fileName;
+            if (!(dir.exists() && dir.isDirectory())) dir.mkdirs();
+            String name = fileDir + "/robotSaves/" + fileName;
+
             output = new File(name);
             obj = new FileWriter(output);
             buffered = new BufferedWriter(obj);
+
             for (MotionPoint mtmp : points) {
                 String line = "";
                 for (MotorPoint mp : mtmp.points)
                 {
-                    switch (mp.part)
-                    {
-                        case MOTOR:
-                            line += "M:" + mp.name + ":" + mp.value + "|";
-                            break;
-                        case SERVO:
-                            line += "S:" + mp.name + ":" + mp.value + "|";
-                            break;
-                    }
+                    line += mp.value + ":";
+                    saveTick++;
                 }
                 buffered.write(line);
                 buffered.newLine();
@@ -124,6 +114,7 @@ public class OnTheFlyCreator extends OpMode {
         {
             if (obj != null) {
                 try {
+                    buffered.close();
                     obj.close();
                     telemetry.addData("Finished Saving File", 1);
                 }
@@ -136,29 +127,30 @@ public class OnTheFlyCreator extends OpMode {
         }
     }
 
-    private void writePoint() {
-        List<MotorPoint> mPoints = new ArrayList<MotorPoint>() {{
-            new MotorPoint(MovingPart.MOTOR, "leftB", (float) OpModeGeneral.leftBack.getPower());
-            new MotorPoint(MovingPart.MOTOR, "leftF", (float) OpModeGeneral.leftFront.getPower());
-            new MotorPoint(MovingPart.MOTOR, "rightB", (float) OpModeGeneral.rightBack.getPower());
-            new MotorPoint(MovingPart.MOTOR, "rightF", (float) OpModeGeneral.rightFront.getPower());
-            new MotorPoint(MovingPart.MOTOR, "lifter", (float) OpModeGeneral.lifter.getPower());
-            new MotorPoint(MovingPart.SERVO, "grabberL", (float) OpModeGeneral.grabberL.getPosition());
-            new MotorPoint(MovingPart.SERVO, "grabberR", (float) OpModeGeneral.grabberR.getPosition());
-        }};
-        points.add(new MotionPoint(mPoints));
+    public void start() {
+        inputThread.start();
     }
 
-    public void init() {
-        OpModeGeneral.motorInit(hardwareMap);
-        OpModeGeneral.servoInit(hardwareMap);
+    private void writePoint() {
+        List<MotorPoint> mPoints = new ArrayList<>();
+        mPoints.add(new MotorPoint(MovingPart.MOTOR, "leftB", (float) OpModeGeneral.leftBack.getPower()));
+        mPoints.add(new MotorPoint(MovingPart.MOTOR, "leftF", (float) OpModeGeneral.leftFront.getPower()));
+        mPoints.add(new MotorPoint(MovingPart.MOTOR, "rightB", (float) OpModeGeneral.rightBack.getPower()));
+        mPoints.add(new MotorPoint(MovingPart.MOTOR, "rightF", (float) OpModeGeneral.rightFront.getPower()));
+        mPoints.add(new MotorPoint(MovingPart.MOTOR, "lifter", (float) OpModeGeneral.lifter.getPower()));
+        mPoints.add(new MotorPoint(MovingPart.SERVO, "grabberL", (float) OpModeGeneral.grabberL.getPosition()));
+        mPoints.add(new MotorPoint(MovingPart.SERVO, "grabberR", (float) OpModeGeneral.grabberR.getPosition()));
+        mPoints.add(new MotorPoint(MovingPart.SERVO, "grabberLB", (float) OpModeGeneral.grabberLB.getPosition()));
+        mPoints.add(new MotorPoint(MovingPart.SERVO, "grabberRB", (float) OpModeGeneral.grabberRB.getPosition()));
+        points.add(new MotionPoint(mPoints));
     }
 
     public void loop() {
         //Record Data
         if (!finished) {
             OpModeGeneral.MecanumControl(gamepad1, gamepad2);
-            if (gamepad1.back) inputThread.start();
+            telemetry.addData("Tick", i);
+            telemetry.addData("Count", points.size());
         }
 
         //Save File
