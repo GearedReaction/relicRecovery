@@ -57,6 +57,14 @@ public class OpModeGeneral {
         jewelColor = new ModernRoboticsRGB(hardwareMap, "jewelColor", 0x00) ;
     }
 
+    public static void encoderMode () {
+        leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        lifter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
     public static void cameraInit (HardwareMap hardwareMap) {
         //Camera Init
         camera = new VuforiaCamera(hardwareMap);
@@ -96,7 +104,29 @@ public class OpModeGeneral {
 
 
     // Movement
-    public static void mecanumMove (double leftX, double leftY, double rightX, boolean negated, float speed){
+    public static void grab (double topServos, double bottomServos, double lifterPower, boolean open, boolean openBottom) {
+        // Top
+        if (open) {
+            grabberL.setPosition(Range.clip(((-0.4 + 1) / 2), 0, 1));
+            grabberR.setPosition(Range.clip(1 - ((-0.4 + 1) / 2), 0, 1));
+        } else {
+            grabberL.setPosition(Range.clip(((topServos + 1) / 2), 0, 1));
+            grabberR.setPosition(Range.clip(1 - ((topServos + 1) / 2), 0, 1));
+        }
+
+        // Bottom
+        if (openBottom) {
+            grabberRB.setPosition(Range.clip(((-0.4 + 1) / 2), 0, 1));
+            grabberLB.setPosition(Range.clip(1 - ((-0.4 + 1) / 2), 0, 1));
+        } else {
+            grabberRB.setPosition(Range.clip(((bottomServos + 1) / 2), 0, 1));
+            grabberLB.setPosition(Range.clip(1 - ((bottomServos + 1) / 2), 0, 1));
+        }
+
+        OpModeGeneral.lifter.setPower(lifterPower);
+    }
+
+    public static void mecanumMove (double leftX, double leftY, double rightX, boolean negated, float speed) {
         //Each joystick alone gives the wheel a unique set of instructions
         //These equations add them all together
         if (negated) {
@@ -150,7 +180,7 @@ public class OpModeGeneral {
         mecanumMove(0,0,turnSpeed,false);
     }
 
-    public static void mecanumMove (double leftX, double leftY, double rightX, boolean negated){
+    public static void mecanumMove (double leftX, double leftY, double rightX, boolean negated) {
         //Each joystick alone gives the wheel a unique set of instructions
         //These equations add them all together
         if (negated) {
@@ -189,6 +219,27 @@ public class OpModeGeneral {
 
     }
 
+    public static void singleGrab (boolean openTop, boolean openBottom, double lifterPower) {
+        if (openTop) {
+            grabberL.setPosition(0.3);
+            grabberR.setPosition(0.7);
+        }
+        else {
+            grabberL.setPosition(0.5);
+            grabberR.setPosition(0.5);
+        }
+        if (openBottom) {
+            grabberRB.setPosition(0.3);
+            grabberLB.setPosition(0.7);
+        }
+        else {
+            grabberLB.setPosition(0.5);
+            grabberRB.setPosition(0.5);
+        }
+
+        lifter.setPower(lifterPower);
+    }
+
     public static void divisionDrive (double leftY, double rightX, boolean reverse) {
         double rightVector = leftY - rightX;
         double leftVector = rightX + leftY;
@@ -223,6 +274,17 @@ public class OpModeGeneral {
         mecanumMove(a, b, 0,false);
     }
 
+    public static void resetDriveEncoders (boolean useEncoders) {
+        //Stop and reset encoder
+        if (!useEncoders) {
+            //Run without encoder
+        }
+        else
+        {
+            //Run using encoder
+        }
+    }
+
     public static void driveMotionPoint (MotionPoint mp) {
         leftBack.setPower(mp.points.get(0).value);
         leftFront.setPower(mp.points.get(1).value);
@@ -235,6 +297,15 @@ public class OpModeGeneral {
         grabberRB.setPosition(mp.points.get(8).value);
 
     }
+
+    public static void stopAllMotors() {
+        rightFront.setPower(0);
+        rightBack.setPower(0);
+        leftFront.setPower(0);
+        leftBack.setPower(0);
+        lifter.setPower(0);
+    }
+
 
 
 
@@ -299,46 +370,6 @@ public class OpModeGeneral {
         return n;
     }
 
-    public static void grab (double topServos, double bottomServos, double lifterPower, boolean open, boolean openBottom) {
-        // Top
-        if (open) {
-            OpModeGeneral.grabberL.setPosition(Range.clip(((-0.4 + 1) / 2), 0, 1));
-            OpModeGeneral.grabberR.setPosition(Range.clip(1 - ((-0.4 + 1) / 2), 0, 1));
-        } else {
-            OpModeGeneral.grabberL.setPosition(Range.clip(((topServos + 1) / 2), 0, 1));
-            OpModeGeneral.grabberR.setPosition(Range.clip(1 - ((topServos + 1) / 2), 0, 1));
-        }
-
-        // Bottom
-        if (openBottom) {
-            OpModeGeneral.grabberRB.setPosition(Range.clip(((-0.4 + 1) / 2), 0, 1));
-            OpModeGeneral.grabberLB.setPosition(Range.clip(1 - ((-0.4 + 1) / 2), 0, 1));
-        } else {
-            OpModeGeneral.grabberRB.setPosition(Range.clip(((bottomServos + 1) / 2), 0, 1));
-            OpModeGeneral.grabberLB.setPosition(Range.clip(1 - ((bottomServos + 1) / 2), 0, 1));
-        }
-
-        OpModeGeneral.lifter.setPower(lifterPower);
-    }
-
-    public static void resetDriveEncoders (boolean useEncoders) {
-        //Stop and reset encoder
-        if (!useEncoders) {
-            //Run without encoder
-        }
-        else
-        {
-            //Run using encoder
-        }
-    }
-
-    public static void stopAllMotors() {
-        rightFront.setPower(0);
-        rightBack.setPower(0);
-        leftFront.setPower(0);
-        leftBack.setPower(0);
-        lifter.setPower(0);
-    }
 
 
     // Movement Schemes
@@ -358,12 +389,7 @@ public class OpModeGeneral {
         else mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x, !reverse);
 
         //Control Grabber (and lifter)
-        double lifterPower = gamepad2.right_trigger-gamepad2.left_trigger;
-        grab(-gamepad2.right_stick_x, gamepad2.left_stick_x, lifterPower, gamepad2.right_stick_button, gamepad2.left_stick_button);
+        singleGrab((gamepad1.left_trigger > 0.5), (gamepad1.right_trigger > 0.5), -gamepad2.right_stick_y);
     }
-
-
-
-
 
 }

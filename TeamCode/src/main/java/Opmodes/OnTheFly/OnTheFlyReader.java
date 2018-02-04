@@ -32,7 +32,6 @@ import General.DataType.MovingPart;
 public class OnTheFlyReader extends OpMode {
 
     private File dir = Environment.getExternalStorageDirectory();
-    private Thread driveThread = new Thread(new UpdateThread());
     private Thread fileThread = new Thread(new LoadThread());
     private List<MotionPoint> motionPoints;
     private boolean frontORback = true;
@@ -41,26 +40,27 @@ public class OnTheFlyReader extends OpMode {
     private String filename = "";
     int k = 0;
 
-    int interval = 1;
-    long nextTime = System.currentTimeMillis() + interval;
-
-    private ConcurrentLinkedQueue<List<Float>> mpoints = new ConcurrentLinkedQueue<>();
+    private ConcurrentLinkedQueue<List<Double>> mpoints = new ConcurrentLinkedQueue<>();
 
     private void loadFile(String fileName) {
         int j = 0;
         for (String ln : getFile(fileName))
         {
             List<String> devices = Arrays.asList(ln.split(":"));
-            List<Float> vals = new ArrayList<>();
-            if (devices.size() >= OpModeGeneral.DEVICECOUNT)
-                for (int i = 0; i < 9; i++) vals.add(Float.parseFloat(devices.get(i)));
+            List<Double> vals = new ArrayList<>();
+            if (devices.size() >= OpModeGeneral.DEVICECOUNT) {
+                for (int i = 0; i < 9; i++) {
+                    if (devices.get(i).equals("-")) vals.add(null);
+                    else vals.add(Double.parseDouble(devices.get(i)));
+                }
+            }
             mpoints.offer(vals);
             if (j == 5) ready = true;
             j++;
         }
     }
 
-    private void move (List<Float> devices) {
+    private void move (List<Double> devices) {
         OpModeGeneral.leftBack.setPower(devices.get(0));
         OpModeGeneral.leftFront.setPower(devices.get(1));
         OpModeGeneral.rightBack.setPower(devices.get(2));
@@ -72,30 +72,22 @@ public class OnTheFlyReader extends OpMode {
         OpModeGeneral.grabberRB.setPosition(devices.get(8));
     }
 
-    private class UpdateThread implements Runnable {
+    private void moveEncoder (List<Double> devices) {
+        if (devices.get(0) != null) OpModeGeneral.leftBack.setTargetPosition((int)(double) devices.get(0));
+        if (devices.get(1) != null) OpModeGeneral.leftFront.setTargetPosition((int)(double) devices.get(1));
+        if (devices.get(2) != null) OpModeGeneral.rightBack.setTargetPosition((int)(double) devices.get(2));
+        if (devices.get(3) != null) OpModeGeneral.rightFront.setTargetPosition((int)(double) devices.get(3));
+        OpModeGeneral.lifter.setPower(devices.get(4));
 
-        @Override
-        public void run(){
-            while (!mpoints.isEmpty()) {
-                while (nextTime - System.currentTimeMillis() > 0)
-                    ;
-                read();
-                nextTime += interval;
-            }
-            OpModeGeneral.stopAllMotors();
-        }
-    }
+        OpModeGeneral.leftBack.setPower(1);
+        OpModeGeneral.leftFront.setPower(1);
+        OpModeGeneral.rightBack.setPower(1);
+        OpModeGeneral.rightFront.setPower(1);
 
-    private void read()
-    {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                telemetry.addData("Tick", k);
-            }
-        });
-        move(mpoints.poll());
-        k++;
+        OpModeGeneral.grabberL.setPosition(devices.get(5));
+        OpModeGeneral.grabberR.setPosition(devices.get(6));
+        OpModeGeneral.grabberLB.setPosition(devices.get(7));
+        OpModeGeneral.grabberRB.setPosition(devices.get(8));
     }
 
     private List<String> getFile (String fileName) {
@@ -166,25 +158,26 @@ public class OnTheFlyReader extends OpMode {
         }
     }
 
+    public void init() {
+        OpModeGeneral.motionInit(hardwareMap);
+        OpModeGeneral.cameraInit(hardwareMap);
+        OpModeGeneral.encoderMode();
+    }
+
     public void start() {
         fileThread.start();
     }
 
-    public void init() {
-        OpModeGeneral.motionInit(hardwareMap);
-        OpModeGeneral.cameraInit(hardwareMap);
-    }
-
     public void loop() {
         if (ready) {
-            driveThread.start();
-            ready = false;
+            telemetry.addData("Tick", k);
+            if (!mpoints.isEmpty()) {
+                moveEncoder(mpoints.poll());
+            }
+            else {
+                OpModeGeneral.stopAllMotors();
+            }
         }
-    }
-
-    public void stop()
-    {
-        driveThread.interrupt();
     }
 
 

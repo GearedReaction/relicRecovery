@@ -11,7 +11,7 @@ import General.Utility.OpModeGeneral;
 /**
  * Created by ironOwlKing on 2/4/2017.
  */
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Color Sensor Only Launch Twice Hit Two Beacon Drive Sensor", group = "Competition")
+@Autonomous(name = "", group = "Competition")
 
 public class Yeetonomous extends OpMode {
 
