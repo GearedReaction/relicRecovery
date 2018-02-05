@@ -19,11 +19,9 @@ import General.Utility.OpModeGeneral;
 public class TestColor extends OpMode {
 
     public static ModernRoboticsRGB sensor;
-    public static Servo jewelExtender;
-    public static Servo jewelHitter;
+
     public static TimerTask getTheColor, dropDown;
     public static Timer time;
-    public static boolean isRed;
 
 
     public void start()
@@ -35,20 +33,13 @@ public class TestColor extends OpMode {
 
         OpModeGeneral.servoInit(hardwareMap);
         OpModeGeneral.sensorInit(hardwareMap);
-        jewelExtender = hardwareMap.servo.get("jewelExtender");
-        jewelHitter = hardwareMap.servo.get("jewelHitter");
-        sensor = new ModernRoboticsRGB(hardwareMap, "cc", 0x3c);
-        sensor.togglePassive();
-        if (OpModeGeneral.isRed(OpModeGeneral.jewelColor)) telemetry.addData("Color", "Red");
-        else telemetry.addData("Color", "Blue");
+        OpModeGeneral.jewelExtender.setPosition(0.5);
+        OpModeGeneral.jewelHitter.setPosition(0.5);
         timerInit();
     }
 
 
-    public void loop()
-    {
-
-    }
+    public void loop() {}
 
 
     private void timerSchedule(){
@@ -60,30 +51,20 @@ public class TestColor extends OpMode {
         time = new Timer();
         dropDown = new TimerTask() {
             public void run() {
-                jewelExtender.setPosition(Range.clip(1, 0, 1));
+                OpModeGeneral.jewelExtender.setPosition(1);
             }
         };
 
         getTheColor = new TimerTask() {
             public void run() {
+                if (OpModeGeneral.isRed(OpModeGeneral.jewelColor))
+                    OpModeGeneral.jewelHitter.setPosition(0.7);
+                else
+                    OpModeGeneral.jewelHitter.setPosition(0.3);
 
-                if(isRed()){
-                    jewelHitter.setPosition(Range.clip(1, 0, 1));
-                } else {
-                    jewelHitter.setPosition(Range.clip(0, 0, 1));
-                }
+
             }
         };
 
     }
-
-    private boolean isRed(){
-        if(sensor.blue() > sensor.red()){
-            return false;
-        } else {
-            return true;
-        }
-
-    }
-
 }

@@ -3,6 +3,7 @@ package General.Utility;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -32,7 +33,7 @@ public class OpModeGeneral {
 
 
     // Sensors
-    public static ModernRoboticsRGB jewelColor;
+    public static ColorSensor jewelColor;
     public static VuforiaCamera camera;
 
     // Motors
@@ -47,6 +48,8 @@ public class OpModeGeneral {
     public static Servo grabberR;
     public static Servo grabberLB;
     public static Servo grabberRB;
+    public static Servo jewelExtender;
+    public static Servo jewelHitter;
 
 
 
@@ -54,15 +57,28 @@ public class OpModeGeneral {
 
     // Initialization
     public static void sensorInit (HardwareMap hardwareMap) {
-        jewelColor = new ModernRoboticsRGB(hardwareMap, "jewelColor", 0x00) ;
+        jewelColor = hardwareMap.colorSensor.get("jewelColor");
     }
 
-    public static void encoderMode () {
-        leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        lifter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    public static void encoderMode (boolean justReset) {
+        // Ensure that encoders are fully reset
+        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        if (!justReset) {
+            // Set drive mode
+            leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        }
     }
 
     public static void cameraInit (HardwareMap hardwareMap) {
@@ -89,6 +105,8 @@ public class OpModeGeneral {
         grabberR = hardwareMap.servo.get("grabberR");
         grabberLB = hardwareMap.servo.get("grabberLB");
         grabberRB = hardwareMap.servo.get("grabberRB");
+        jewelExtender = hardwareMap.servo.get("jewelExtender");
+        jewelHitter = hardwareMap.servo.get("jewelHitter");
     }
 
     public static void allInit (HardwareMap hardwareMap) {
@@ -351,11 +369,6 @@ public class OpModeGeneral {
         return 0;
     }
 
-    public static boolean isRed (ModernRoboticsRGB rgb) {
-        if (rgb.red() > rgb.blue()) return true;
-        return false;
-    }
-
     public static int getGreyscaleCount(Bitmap bitmap) {
         int height = bitmap.getHeight();
         int width = bitmap.getWidth();
@@ -370,10 +383,13 @@ public class OpModeGeneral {
         return n;
     }
 
-
+    public static boolean isRed (ColorSensor rgb) {
+        if (rgb.red() > rgb.blue()) return true;
+        return false;
+    }
 
     // Movement Schemes
-    public static void MecanumControl (Gamepad gamepad1, Gamepad gamepad2) {
+    public static void MecanumControl (Gamepad gamepad1, Gamepad gamepad2, boolean forceHalfSpeed) {
         //Trigger reverse
         if (gamepad1.a & !lastAButton) reverse = !reverse;
         if (gamepad1.a) lastAButton = true;
@@ -384,8 +400,11 @@ public class OpModeGeneral {
         if (gamepad1.x) lastXButton = true;
         else lastXButton = false;
 
+
+
         //Move robot
-        if (slomo) mecanumMove(-gamepad1.left_stick_x/2, -gamepad1.left_stick_y/2, gamepad1.right_stick_x/2, !reverse);
+        if (forceHalfSpeed) mecanumMove(-gamepad1.left_stick_x/3, -gamepad1.left_stick_y/3, gamepad1.right_stick_x/3, !reverse);
+        else if (slomo) mecanumMove(-gamepad1.left_stick_x/2, -gamepad1.left_stick_y/2, gamepad1.right_stick_x/2, !reverse);
         else mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x, !reverse);
 
         //Control Grabber (and lifter)

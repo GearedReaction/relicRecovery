@@ -1,6 +1,5 @@
 package Opmodes.OnTheFly;
 
-import android.graphics.Path;
 import android.os.Environment;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -10,17 +9,12 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.io.*;
-import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 
-import General.DataType.CheckDirection;
 import General.Utility.OpModeGeneral;
 
 /**
@@ -30,7 +24,7 @@ import General.Utility.OpModeGeneral;
 
 public class OnTheFlyCreator extends OpMode {
 
-    private List<CheckDirection> ckdirs = new ArrayList<>();
+    private List<double[]> idirs = new ArrayList<>();
 
     private ConcurrentLinkedQueue<List<Double>> points = new ConcurrentLinkedQueue<>();
     private File fileDir = Environment.getExternalStorageDirectory();
@@ -44,7 +38,7 @@ public class OnTheFlyCreator extends OpMode {
     private int column = 0;
     private int i = 0;
 
-    private int flipI = 0;
+
 
     private void writePoint() {
         //Write Point
@@ -61,40 +55,35 @@ public class OnTheFlyCreator extends OpMode {
         points.offer(values);
 
         //Move Robot and iterate
-        OpModeGeneral.MecanumControl(gamepad1, gamepad2);
+        OpModeGeneral.MecanumControl(gamepad1, gamepad2, true);
         i++;
     }
 
+    private void checkDirPower(DcMotor motor, int id) {
+        int sign = 0;
+        if (motor.getPower() == 0) sign = 0;
+        else if (motor.getPower() > 0) sign = 1;
+        else sign = -1;
 
-    private void checkDirection(CheckDirection ckdir) {
-        ckdir.tempUp = ckdir.up;
-        if (ckdir.motor.getCurrentPosition() > ckdir.max) ckdir.up = true;
-        else ckdir.up = false;
-        int pos = ckdir.motor.getCurrentPosition();
-        ckdir.max = pos < ckdir.max ? pos : ckdir.max;
-        ckdir.min = pos < ckdir.min ? pos : ckdir.min;
-        if (!(ckdir.previous == pos)) {
-            if (ckdir.tempUp != ckdir.up) {
-                // Minima
-                if (ckdir.up) {
-                    mmap.get(ckdir.index).put(flipI, (double) ckdir.min);
-                    flipI = i;
-                    ckdir.max = ckdir.min;
-                }
-                // Maxima
-                else {
-                    mmap.get(ckdir.index).put(flipI, (double) ckdir.max);
-                    flipI = i;
-                    ckdir.min = ckdir.max;
-                }
+        int pSign = 0;
+        if (idirs.get(id)[0] == 0) pSign = 0;
+        else if (idirs.get(id)[0] > 0) pSign = 1;
+        else pSign = -1;
 
-            }
+        if (sign != pSign) {
+            mmap.get(id).put((int) idirs.get(id)[1], (double) motor.getCurrentPosition());
+            idirs.get(id)[0] = motor.getPower();
+            idirs.get(id)[1] = i;
         }
+
     }
 
     private void writePointEncoder() {
         //Write Point
-        for (CheckDirection c : ckdirs) checkDirection(c);
+        checkDirPower(OpModeGeneral.leftBack, 0);
+        checkDirPower(OpModeGeneral.leftFront, 1);
+        checkDirPower(OpModeGeneral.rightBack, 2);
+        checkDirPower(OpModeGeneral.rightFront, 3);
 
         mmap.get(4).put(i, OpModeGeneral.lifter.getPower());
         mmap.get(5).put(i, OpModeGeneral.grabberL.getPosition());
@@ -103,7 +92,7 @@ public class OnTheFlyCreator extends OpMode {
         mmap.get(8).put(i, OpModeGeneral.grabberRB.getPosition());
 
         //Move Robot and iterate
-        OpModeGeneral.MecanumControl(gamepad1, gamepad2);
+        OpModeGeneral.MecanumControl(gamepad1, gamepad2, true);
         i++;
     }
 
@@ -124,23 +113,17 @@ public class OnTheFlyCreator extends OpMode {
             buffered = new BufferedWriter(obj);
 
             StringBuilder line = new StringBuilder("");
-
-            for (int zoink = 0; zoink < i; zoink++)
+            telemetry.addData("Final tick", i);
+            for (int j = 0; j < i; j++)
             {
-                for (HashMap<Integer, Double> map : mmap)
+                for (HashMap<Integer, Double> hmap : mmap)
                 {
-                    boolean hasValue = false;
-                    for (Map.Entry<Integer, Double> entry : map.entrySet())
+                    if (hmap.containsKey(j))
                     {
-                        if (entry.getKey() == zoink);
-                        {
-                            line.append(entry.getValue());
-                            line.append(":");
-                            hasValue = true;
-                            break;
-                        }
+                        line.append(hmap.get(j));
+                        line.append(":");
                     }
-                    if (!hasValue)
+                    else
                     {
                         line.append("-");
                         line.append(":");
@@ -148,6 +131,7 @@ public class OnTheFlyCreator extends OpMode {
                 }
                 buffered.write(line.toString());
                 buffered.newLine();
+                line = new StringBuilder("");
             }
         }
         catch (FileNotFoundException fl)
@@ -179,19 +163,21 @@ public class OnTheFlyCreator extends OpMode {
 
     public void init() {
         OpModeGeneral.motionInit(hardwareMap);
-        ckdirs.add(new CheckDirection(0, OpModeGeneral.leftBack));
-        ckdirs.add(new CheckDirection(1, OpModeGeneral.leftFront));
-        ckdirs.add(new CheckDirection(2, OpModeGeneral.rightBack));
-        ckdirs.add(new CheckDirection(3, OpModeGeneral.rightFront));
+        for (int i = 0; i < 4; i++) idirs.add(new double[]{0.0,0.0});
         for (int z = 0; z < 9; z++) mmap.add(new HashMap<Integer, Double>());
+
+    }
+
+    public void start() {
+        OpModeGeneral.encoderMode(true);
     }
 
     public void loop() {
         if (!finished) {
             telemetry.addData("Tick", i);
             telemetry.addData("Count", points.size());
-            if (i < 30000) writePointEncoder();
-            else finished = true;
+            writePointEncoder();
+
             if (gamepad1.y) finished = true;
         }
         //Save File
@@ -235,14 +221,5 @@ public class OnTheFlyCreator extends OpMode {
 
         }
     }
-
-
-
-
-
-
-
-
-
 
 }

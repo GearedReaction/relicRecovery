@@ -12,6 +12,6 @@ public class Drive extends OpMode {
     }
 
     public void loop() {
-        OpModeGeneral.MecanumControl(gamepad1, gamepad2);
+        OpModeGeneral.MecanumControl(gamepad1, gamepad2, false);
     }
 }

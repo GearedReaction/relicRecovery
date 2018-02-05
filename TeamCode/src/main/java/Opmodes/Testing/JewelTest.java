@@ -14,15 +14,13 @@ import General.Utility.OpModeGeneral;
 
 @TeleOp(name = "JewelTest", group = "Test")
 public class JewelTest extends OpMode{
-    Servo jewelExtender;
-    Servo jewelHitter;
 
     public void init(){
-
+        OpModeGeneral.sensorInit(hardwareMap);
     }
 
     public void loop(){
-
+        telemetry.addData("IsRed", OpModeGeneral.isRed(OpModeGeneral.jewelColor));
     }
 
 }
