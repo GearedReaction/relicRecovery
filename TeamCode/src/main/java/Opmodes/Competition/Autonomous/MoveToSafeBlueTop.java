@@ -12,7 +12,6 @@ import General.Utility.OpModeGeneral;
 /**
  * Created by union on 17年11月3日.
  */
-@Autonomous(name = "DriveForwardDropCube", group = "Competition")
 
 // Face away from the relic cap zone
 

@@ -12,7 +12,7 @@ import com.qualcomm.robotcore.util.Range;
 import General.Utility.OpModeGeneral;
 
 
-@TeleOp(name = "JewelTest", group = "Test")
+@TeleOp(name = "TestColor", group = "Test")
 public class JewelTest extends OpMode{
 
     public void init(){

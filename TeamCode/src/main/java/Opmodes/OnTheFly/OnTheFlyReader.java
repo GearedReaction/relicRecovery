@@ -5,7 +5,6 @@ import android.os.Environment;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
 
 import java.io.FileNotFoundException;
 import java.io.BufferedReader;
@@ -19,12 +18,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
 
 import General.Utility.OpModeGeneral;
-import General.DataType.MotionPoint;
-import General.DataType.MotorPoint;
-import General.DataType.MovingPart;
 
 /**
  * Created by Bryan Perkins                       on 2/7/17.
@@ -177,7 +172,7 @@ public class OnTheFlyReader extends OpMode {
 
         raise = new TimerTask() {
             public void run() {
-                OpModeGeneral.jewelExtender.setPosition(0.5);
+                OpModeGeneral.jewelExtender.setPosition(0.35);
             }
         };
 
@@ -200,7 +195,11 @@ public class OnTheFlyReader extends OpMode {
         OpModeGeneral.allInit(hardwareMap);
         OpModeGeneral.encoderMode(false);
         OpModeGeneral.jewelHitter.setPosition(0.5);
-        OpModeGeneral.jewelExtender.setPosition(0.5);
+        OpModeGeneral.jewelExtender.setPosition(0.35);
+        OpModeGeneral.grabberL.setPosition(0);
+        OpModeGeneral.grabberR.setPosition(1);
+        OpModeGeneral.grabberLB.setPosition(1);
+        OpModeGeneral.grabberRB.setPosition(0);
         timerInit();
     }
 

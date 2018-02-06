@@ -21,7 +21,6 @@ import General.Utility.OpModeGeneral;
  * Created by admin on 12/16/2017.
  */
 
-@TeleOp (name = "BallTest", group = "Test")
 public class BallTest extends OpMode {
 
     public void init()

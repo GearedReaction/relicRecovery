@@ -3,6 +3,7 @@ package General.Utility;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 
+import com.qualcomm.hardware.lynx.LynxI2cColorRangeSensor;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -10,9 +11,9 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
-import Devices.Drivers.ModernRoboticsRGB;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
 import Devices.Drivers.VuforiaCamera;
-import General.DataType.MotionPoint;
 import General.DataType.RGB;
 
 /**
@@ -28,11 +29,15 @@ public class OpModeGeneral {
     private static double _topLeft, _topRight, _bottomLeft, _bottomRight, _maxVector;
     private static boolean lastAButton = false;
     private static boolean lastXButton = false;
+    private static boolean lastBButton = false;
+    private static boolean manualMode = false;
     private static boolean reverse = false;
     private static boolean slomo = false;
 
 
+
     // Sensors
+    public static LynxI2cColorRangeSensor blockProximity;
     public static ColorSensor jewelColor;
     public static VuforiaCamera camera;
 
@@ -44,12 +49,12 @@ public class OpModeGeneral {
     public static DcMotor lifter;
 
     // Servos
+    public static Servo jewelExtender;
+    public static Servo jewelHitter;
     public static Servo grabberL;
     public static Servo grabberR;
     public static Servo grabberLB;
     public static Servo grabberRB;
-    public static Servo jewelExtender;
-    public static Servo jewelHitter;
 
 
 
@@ -58,27 +63,7 @@ public class OpModeGeneral {
     // Initialization
     public static void sensorInit (HardwareMap hardwareMap) {
         jewelColor = hardwareMap.colorSensor.get("jewelColor");
-    }
-
-    public static void encoderMode (boolean justReset) {
-        // Ensure that encoders are fully reset
-        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        if (!justReset) {
-            // Set drive mode
-            leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        }
+        blockProximity = hardwareMap.get(LynxI2cColorRangeSensor.class, "blockProximity");
     }
 
     public static void cameraInit (HardwareMap hardwareMap) {
@@ -114,6 +99,27 @@ public class OpModeGeneral {
         sensorInit(hardwareMap);
         servoInit(hardwareMap);
         cameraInit(hardwareMap);
+    }
+
+    public static void encoderMode (boolean justReset) {
+        // Ensure that encoders are fully reset
+        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        if (!justReset) {
+            // Set drive mode
+            leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        }
     }
 
 
@@ -194,10 +200,6 @@ public class OpModeGeneral {
         rightBack.setPower(rightB * multiplier);
     }
 
-    public static void mecanumTurn (double turnSpeed){
-        mecanumMove(0,0,turnSpeed,false);
-    }
-
     public static void mecanumMove (double leftX, double leftY, double rightX, boolean negated) {
         //Each joystick alone gives the wheel a unique set of instructions
         //These equations add them all together
@@ -228,13 +230,6 @@ public class OpModeGeneral {
         leftBack.setPower(_topRight/_maxVector);
         rightFront.setPower(_bottomLeft/_maxVector);
         rightBack.setPower(_bottomRight/_maxVector);
-    }
-
-    public static void mecanumEncoderMove (float power, float[] distanceInTicks, float angle) {
-        resetDriveEncoders(true);
-
-        mecanumDriveAngle(power,angle);
-
     }
 
     public static void singleGrab (boolean openTop, boolean openBottom, double lifterPower) {
@@ -286,12 +281,6 @@ public class OpModeGeneral {
         rightBack.setPower(rightY * multiplier);
     }
 
-    public static void mecanumDriveAngle (float angle, float power) {
-        float b = (float) Math.sin(90-angle);
-        float a = (float) (Math.pow(power,2) - Math.pow(b,2));
-        mecanumMove(a, b, 0,false);
-    }
-
     public static void resetDriveEncoders (boolean useEncoders) {
         //Stop and reset encoder
         if (!useEncoders) {
@@ -301,19 +290,6 @@ public class OpModeGeneral {
         {
             //Run using encoder
         }
-    }
-
-    public static void driveMotionPoint (MotionPoint mp) {
-        leftBack.setPower(mp.points.get(0).value);
-        leftFront.setPower(mp.points.get(1).value);
-        rightBack.setPower(mp.points.get(2).value);
-        rightFront.setPower(mp.points.get(3).value);
-        lifter.setPower(mp.points.get(4).value);
-        grabberL.setPosition(mp.points.get(5).value);
-        grabberR.setPosition(mp.points.get(6).value);
-        grabberLB.setPosition(mp.points.get(7).value);
-        grabberRB.setPosition(mp.points.get(8).value);
-
     }
 
     public static void stopAllMotors() {
@@ -327,7 +303,7 @@ public class OpModeGeneral {
 
 
 
-    // Process Image
+    // Process sensor data
     public static Bitmap[][] splitBitmap(Bitmap bitmap, int xCount, int yCount) {
         Bitmap[][] bitmaps = new Bitmap[xCount][yCount];
         int width, height;
@@ -388,6 +364,7 @@ public class OpModeGeneral {
         return false;
     }
 
+
     // Movement Schemes
     public static void MecanumControl (Gamepad gamepad1, Gamepad gamepad2, boolean forceHalfSpeed) {
         //Trigger reverse
@@ -400,6 +377,10 @@ public class OpModeGeneral {
         if (gamepad1.x) lastXButton = true;
         else lastXButton = false;
 
+        //Trigger manual grabber control
+        if (gamepad1.b & !lastBButton) manualMode = !manualMode;
+        if (gamepad1.b) lastBButton = true;
+        else lastBButton = false;
 
 
         //Move robot
@@ -407,8 +388,19 @@ public class OpModeGeneral {
         else if (slomo) mecanumMove(-gamepad1.left_stick_x/2, -gamepad1.left_stick_y/2, gamepad1.right_stick_x/2, !reverse);
         else mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x, !reverse);
 
+
         //Control Grabber (and lifter)
-        singleGrab((gamepad1.left_trigger > 0.5), (gamepad1.right_trigger > 0.5), -gamepad2.right_stick_y);
+        double distance = blockProximity.getDistance(DistanceUnit.CM);
+        if (!manualMode) {
+            if (distance < 6 && !(gamepad1.right_trigger > 0.5))
+                OpModeGeneral.singleGrab(false, false, 0);
+            else
+                OpModeGeneral.singleGrab(true, true, -gamepad2.right_stick_y);
+        }
+        else
+        {
+            OpModeGeneral.singleGrab((gamepad1.left_trigger > 0.5), (gamepad1.right_trigger > 0.5), -gamepad2.right_stick_y);
+        }
     }
 
 }

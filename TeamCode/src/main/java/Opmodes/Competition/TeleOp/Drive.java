@@ -9,6 +9,9 @@ public class Drive extends OpMode {
 
     public void init() {
         OpModeGeneral.motionInit(hardwareMap);
+        OpModeGeneral.sensorInit(hardwareMap);
+        OpModeGeneral.jewelHitter.setPosition(0.5);
+        OpModeGeneral.jewelExtender.setPosition(0.35);
     }
 
     public void loop() {

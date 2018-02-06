@@ -11,7 +11,6 @@ import General.Utility.OpModeGeneral;
  * Created by union on 18年1月9日.
  */
 
-@TeleOp(name="GripTest", group = "Test")
 public class GripTest extends OpMode {
 
     Servo rightB;

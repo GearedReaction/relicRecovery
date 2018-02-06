@@ -70,8 +70,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannelController;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
-@Autonomous(name = "Adafruit Sample", group = "Samples")
-@Disabled                            // Comment this out to add to the opmode list
+
 public class RGBSampleNoLED extends LinearOpMode {
 
     ColorSensor sensorRGB;

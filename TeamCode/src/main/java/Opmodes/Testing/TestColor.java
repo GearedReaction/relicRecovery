@@ -1,24 +1,20 @@
 package Opmodes.Testing;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
 
 import java.util.Timer;
 import java.util.TimerTask;
 
-import Devices.Drivers.ModernRoboticsRGB;
 import General.Utility.OpModeGeneral;
 
 /**
  * Created by union on 18年1月19日.
  */
 
-@Autonomous (name="TestColor", group = "Test")
+@TeleOp (name="JewelTest", group = "Test")
 public class TestColor extends OpMode {
-
-    public static ModernRoboticsRGB sensor;
 
     public static TimerTask getTheColor, dropDown;
     public static Timer time;

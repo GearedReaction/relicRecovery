@@ -8,7 +8,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  * Created by admin on 4/1/2017.
  */
 
-@TeleOp(name = "LeftRightUltraSensor", group = "Sensors")
 
 public class ModernRoboticsUltrasonic extends OpMode {
     UltrasonicSensor left, right;

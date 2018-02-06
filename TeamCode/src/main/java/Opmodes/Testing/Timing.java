@@ -10,7 +10,6 @@ import Opmodes.OnTheFly.OnTheFlyCreator;
  */
 
 
-@TeleOp(name="TimingTest", group = "Test")
 public class Timing extends OpMode {
 
     private int i = 0;

@@ -10,9 +10,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.DecimalFormat;
-
-import General.DataType.MotionPoint;
 
 /**
  * Created by admin on 12/16/2017.
