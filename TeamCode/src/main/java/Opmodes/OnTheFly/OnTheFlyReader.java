@@ -30,35 +30,19 @@ import General.Utility.OpModeGeneral;
 public class OnTheFlyReader extends OpMode {
 
     private File dir = Environment.getExternalStorageDirectory();
-    private Thread fileThread = new Thread(new LoadThread());
-    private boolean frontORback = true;
-    private boolean redORblue = true;
+    private Thread LoadThread = new Thread(new LoadThread());
+    private boolean front = true;
+    private boolean red = true;
     private boolean ready = false;
     private String filename = "";
     private int k = 0;
 
-    private static TimerTask getTheColor, dropDown, moveBack, raise, run;
+    private static TimerTask getTheColor, dropDown, moveBack, raise, raisePartial, run;
     private static Timer time;
 
     private ConcurrentLinkedQueue<List<Double>> mpoints = new ConcurrentLinkedQueue<>();
 
-    private void loadFile(String fileName) {
-        int j = 0;
-        for (String ln : getFile(fileName))
-        {
-            List<String> devices = Arrays.asList(ln.split(":"));
-            List<Double> vals = new ArrayList<>();
-            if (devices.size() >= OpModeGeneral.DEVICECOUNT) {
-                for (int i = 0; i < 9; i++) {
-                    if (devices.get(i).equals("-")) vals.add(111111.22334);
-                    else vals.add(Double.parseDouble(devices.get(i)));
-                }
-            }
-            mpoints.offer(vals);
-            j++;
-        }
-    }
-
+    // Move
     private void moveEncoder (List<Double> devices) {
 
         if (devices.get(0) != 111111.22334) OpModeGeneral.leftBack.setTargetPosition((int)(double) devices.get(0));
@@ -79,6 +63,104 @@ public class OnTheFlyReader extends OpMode {
         OpModeGeneral.grabberRB.setPosition(devices.get(8));
     }
 
+
+    // Parse File
+    private void loadFile(String fileName) {
+        for (String ln : getFile(fileName))
+        {
+            List<String> devices = Arrays.asList(ln.split(":"));
+            List<Double> vals = new ArrayList<>();
+            if (devices.size() >= OpModeGeneral.DEVICECOUNT) {
+                for (int i = 0; i < 9; i++) {
+                    if (devices.get(i).equals("-")) vals.add(111111.22334);
+                    else vals.add(Double.parseDouble(devices.get(i)));
+                }
+            }
+            mpoints.offer(vals);
+        }
+    }
+
+    private class LoadThread implements Runnable {
+        @Override
+        public void run(){
+            telemetry.addData("Entered loading thread",0);
+            int pictograph = OpModeGeneral.camera.getVuMark();
+            if (pictograph == -1) filename = "test.mtmp";
+            else {
+                if (pictograph == 0) filename += "Left";
+                else if (pictograph == 1) filename += "Center";
+                else if (pictograph == 2) filename += "Right";
+                filename += red ? "Red" : "Blue";
+                filename += front ? "F" : "B";
+                filename += ".mtmp";
+            }
+            loadFile(dir + "/robotSaves/" + filename);
+        }
+    }
+
+
+    // Manage TimerTasks
+    private void timerInit() {
+        time = new Timer();
+        dropDown = new TimerTask() {
+            public void run() {
+                OpModeGeneral.jewelExtender.setPosition(1);
+            }
+        };
+
+        getTheColor = new TimerTask() {
+            public void run() {
+                if (red) {
+                    if (OpModeGeneral.isRed(OpModeGeneral.jewelColor))
+                        OpModeGeneral.jewelHitter.setPosition(0.7);
+                    else
+                        OpModeGeneral.jewelHitter.setPosition(0.3);
+                }
+                else {
+                    if (OpModeGeneral.isRed(OpModeGeneral.jewelColor))
+                        OpModeGeneral.jewelHitter.setPosition(0.3);
+                    else
+                        OpModeGeneral.jewelHitter.setPosition(0.7);
+                }
+            }
+        };
+
+        moveBack = new TimerTask() {
+            public void run() {
+                OpModeGeneral.jewelHitter.setPosition(0.5);
+            }
+        };
+
+        raise = new TimerTask() {
+            public void run() {
+                OpModeGeneral.jewelExtender.setPosition(0.35);
+            }
+        };
+
+        raisePartial = new TimerTask() {
+            public void run() {
+                OpModeGeneral.jewelExtender.setPosition(0.5);
+            }
+        };
+
+        run = new TimerTask() {
+            public void run() {
+                ready = true;
+            }
+        };
+    }
+
+    private void timerSchedule() {
+        time.schedule(dropDown, 0);
+        time.schedule(getTheColor, 1500);
+        time.schedule(raisePartial, 2500);
+        time.schedule(moveBack, 3000);
+        time.schedule(raise, 3500);
+        time.schedule(run, 4000);
+    }
+
+
+    // Load Files
     private List<String> getFile (String fileName) {
         List<String> lines = new ArrayList<>();
         try {
@@ -104,25 +186,6 @@ public class OnTheFlyReader extends OpMode {
         return lines;
     }
 
-    private class LoadThread implements Runnable {
-        @Override
-        public void run(){
-            telemetry.addData("Entered loading thread",0);
-            //loadConfig();
-            int pictograph = OpModeGeneral.camera.getVuMark();
-            if (pictograph == -1) filename = "test.mtmp";
-            else {
-                if (pictograph == 0) filename += "Left";
-                else if (pictograph == 1) filename += "Center";
-                else if (pictograph == 2) filename += "Right";
-                filename += redORblue ? "Red" : "Blue";
-                filename += frontORback ? "F" : "B";
-                filename += ".mtmp";
-            }
-            loadFile(dir + "/robotSaves/" + filename);
-        }
-    }
-
     private void loadConfig () {
         try {
             FileReader fileReader = new FileReader(dir + "/robotSaves/config.cfg");
@@ -130,8 +193,8 @@ public class OnTheFlyReader extends OpMode {
             String line;
             int i = 0;
             while((line = reader.readLine()) != null) {
-                if (i == 0) frontORback = (line.equals("0")) ? false : true;
-                else redORblue = (line.equals("0")) ? false : true;
+                if (i == 0) front = (line.equals("0")) ? false : true;
+                else red = (line.equals("0")) ? false : true;
                 i++;
             }
         }
@@ -147,55 +210,14 @@ public class OnTheFlyReader extends OpMode {
         }
     }
 
-    private void timerInit() {
-        time = new Timer();
-        dropDown = new TimerTask() {
-            public void run() {
-                OpModeGeneral.jewelExtender.setPosition(1);
-            }
-        };
 
-        getTheColor = new TimerTask() {
-            public void run() {
-                if (OpModeGeneral.isRed(OpModeGeneral.jewelColor))
-                    OpModeGeneral.jewelHitter.setPosition(0.7);
-                else
-                    OpModeGeneral.jewelHitter.setPosition(0.3);
-            }
-        };
-
-        moveBack = new TimerTask() {
-            public void run() {
-                OpModeGeneral.jewelHitter.setPosition(0.5);
-            }
-        };
-
-        raise = new TimerTask() {
-            public void run() {
-                OpModeGeneral.jewelExtender.setPosition(0.35);
-            }
-        };
-
-        run = new TimerTask() {
-            public void run() {
-                ready = true;
-            }
-        };
-    }
-
-    private void timerSchedule() {
-        time.schedule(dropDown, 0);
-        time.schedule(getTheColor, 1500);
-        time.schedule(moveBack, 2500);
-        time.schedule(raise, 3000);
-        time.schedule(run, 3500);
-    }
-
+    // OpMode Control
     public void init() {
+        loadConfig();
         OpModeGeneral.allInit(hardwareMap);
         OpModeGeneral.encoderMode(false);
         OpModeGeneral.jewelHitter.setPosition(0.5);
-        OpModeGeneral.jewelExtender.setPosition(0.35);
+        OpModeGeneral.jewelExtender.setPosition(0.1);
         OpModeGeneral.grabberL.setPosition(0);
         OpModeGeneral.grabberR.setPosition(1);
         OpModeGeneral.grabberLB.setPosition(1);
@@ -204,7 +226,7 @@ public class OnTheFlyReader extends OpMode {
     }
 
     public void start() {
-        fileThread.start();
+        LoadThread.start();
         timerSchedule();
     }
 

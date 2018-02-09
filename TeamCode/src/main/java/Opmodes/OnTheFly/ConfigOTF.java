@@ -18,33 +18,23 @@ import java.io.IOException;
 @TeleOp (name="OnTheFly Configure", group = "OnTheFly")
 public class ConfigOTF extends OpMode {
 
-    private boolean redORblue = true;
-    private boolean frontORback = false;
-    private boolean saveReady = false;
-
     private File fileDir = Environment.getExternalStorageDirectory();
+
+    private boolean saveReady = false;
+    private boolean front = false;
+    private boolean red = true;
 
 
     public void init() {}
     public void loop() {
         if (!saveReady) {
-            telemetry.addData("redORblue", redORblue);
-            telemetry.addData("frontORback", frontORback);
-            if (gamepad1.dpad_up) {
-                frontORback = true;
-            }
-            if (gamepad1.dpad_down) {
-                frontORback = false;
-            }
-            if (gamepad1.dpad_left) {
-                redORblue = false;
-            }
-            if (gamepad1.dpad_right) {
-                redORblue = true;
-            }
-            if (gamepad1.a) {
-                saveReady = true;
-            }
+            telemetry.addData("red", red);
+            telemetry.addData("front", front);
+            if (gamepad1.dpad_up) front = true;
+            if (gamepad1.dpad_down) front = false;
+            if (gamepad1.dpad_left) red = false;
+            if (gamepad1.dpad_right) red = true;
+            if (gamepad1.start) saveReady = true;
         }
         else
         {
@@ -59,9 +49,9 @@ public class ConfigOTF extends OpMode {
                 output = new File(fileDir + "/robotSaves/config.cfg");
                 obj = new FileWriter(output);
                 buffered = new BufferedWriter(obj);
-                buffered.write(frontORback ? "1" : "0");
+                buffered.write(front ? "1" : "0");
                 buffered.newLine();
-                buffered.write(redORblue ? "1" : "0");
+                buffered.write(red ? "1" : "0");
                 buffered.newLine();
             }
             catch (FileNotFoundException fl)

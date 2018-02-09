@@ -11,7 +11,7 @@ public class Drive extends OpMode {
         OpModeGeneral.motionInit(hardwareMap);
         OpModeGeneral.sensorInit(hardwareMap);
         OpModeGeneral.jewelHitter.setPosition(0.5);
-        OpModeGeneral.jewelExtender.setPosition(0.35);
+        OpModeGeneral.jewelExtender.setPosition(0.1);
     }
 
     public void loop() {
