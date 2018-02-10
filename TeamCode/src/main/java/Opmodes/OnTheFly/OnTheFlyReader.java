@@ -31,9 +31,9 @@ public class OnTheFlyReader extends OpMode {
 
     private File dir = Environment.getExternalStorageDirectory();
     private Thread LoadThread = new Thread(new LoadThread());
+    private boolean ready = false;
     private boolean front = true;
     private boolean red = true;
-    private boolean ready = false;
     private String filename = "";
     private int k = 0;
 
@@ -100,6 +100,15 @@ public class OnTheFlyReader extends OpMode {
 
 
     // Manage TimerTasks
+    private void timerSchedule() {
+        time.schedule(dropDown, 0);
+        time.schedule(getTheColor, 1500);
+        time.schedule(raisePartial, 2500);
+        time.schedule(moveBack, 3000);
+        time.schedule(raise, 3500);
+        time.schedule(run, 4000);
+    }
+
     private void timerInit() {
         time = new Timer();
         dropDown = new TimerTask() {
@@ -150,15 +159,6 @@ public class OnTheFlyReader extends OpMode {
         };
     }
 
-    private void timerSchedule() {
-        time.schedule(dropDown, 0);
-        time.schedule(getTheColor, 1500);
-        time.schedule(raisePartial, 2500);
-        time.schedule(moveBack, 3000);
-        time.schedule(raise, 3500);
-        time.schedule(run, 4000);
-    }
-
 
     // Load Files
     private List<String> getFile (String fileName) {
@@ -193,8 +193,8 @@ public class OnTheFlyReader extends OpMode {
             String line;
             int i = 0;
             while((line = reader.readLine()) != null) {
-                if (i == 0) front = (line.equals("0")) ? false : true;
-                else red = (line.equals("0")) ? false : true;
+                if (i == 0) front = (line.equals("1"));
+                else red = (line.equals("1"));
                 i++;
             }
         }

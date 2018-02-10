@@ -24,48 +24,30 @@ import General.Utility.OpModeGeneral;
 
 public class OnTheFlyCreator extends OpMode {
 
-    private List<double[]> idirs = new ArrayList<>();
+
 
     private ConcurrentLinkedQueue<List<Double>> points = new ConcurrentLinkedQueue<>();
     private File fileDir = Environment.getExternalStorageDirectory();
     List<HashMap<Integer, Double>> mmap = new ArrayList<>();
+    private List<double[]> idirs = new ArrayList<>();
     private String fileName = "test.mtmp";
     private boolean saveStarted = false;
-    private boolean frontORback = false;
-    private boolean redORblue = false;
+    private boolean front = false;
+    private boolean red = false;
     private boolean saveIsReady;
     private boolean finished;
     private int column = 0;
     private int i = 0;
 
 
-
-    private void writePoint() {
-        //Write Point
-        List < Double > values = new ArrayList<>();
-        values.add(OpModeGeneral.leftBack.getPower());
-        values.add(OpModeGeneral.leftFront.getPower());
-        values.add(OpModeGeneral.rightBack.getPower());
-        values.add(OpModeGeneral.rightFront.getPower());
-        values.add(OpModeGeneral.lifter.getPower());
-        values.add(OpModeGeneral.grabberL.getPosition());
-        values.add(OpModeGeneral.grabberR.getPosition());
-        values.add(OpModeGeneral.grabberLB.getPosition());
-        values.add(OpModeGeneral.grabberRB.getPosition());
-        points.offer(values);
-
-        //Move Robot and iterate
-        OpModeGeneral.MecanumControl(gamepad1, gamepad2, true);
-        i++;
-    }
-
-    private void checkDirPower(DcMotor motor, int id) {
-        int sign = 0;
+    // MotionPoint detection and writing
+    private void checkDirection(DcMotor motor, int id) {
+        int sign;
         if (motor.getPower() == 0) sign = 0;
         else if (motor.getPower() > 0) sign = 1;
         else sign = -1;
 
-        int pSign = 0;
+        int pSign;
         if (idirs.get(id)[0] == 0) pSign = 0;
         else if (idirs.get(id)[0] > 0) pSign = 1;
         else pSign = -1;
@@ -78,12 +60,12 @@ public class OnTheFlyCreator extends OpMode {
 
     }
 
-    private void writePointEncoder() {
+    private void writePoint() {
         //Write Point
-        checkDirPower(OpModeGeneral.leftBack, 0);
-        checkDirPower(OpModeGeneral.leftFront, 1);
-        checkDirPower(OpModeGeneral.rightBack, 2);
-        checkDirPower(OpModeGeneral.rightFront, 3);
+        checkDirection(OpModeGeneral.leftBack, 0);
+        checkDirection(OpModeGeneral.leftFront, 1);
+        checkDirection(OpModeGeneral.rightBack, 2);
+        checkDirection(OpModeGeneral.rightFront, 3);
 
         mmap.get(4).put(i, OpModeGeneral.lifter.getPower());
         mmap.get(5).put(i, OpModeGeneral.grabberL.getPosition());
@@ -96,6 +78,7 @@ public class OnTheFlyCreator extends OpMode {
         i++;
     }
 
+    // File Management
     private void saveFile(String fileName) {
 
         BufferedWriter buffered = null;
@@ -161,6 +144,7 @@ public class OnTheFlyCreator extends OpMode {
         }
     }
 
+    // OpMode Control
     public void init() {
         OpModeGeneral.motionInit(hardwareMap);
         for (int i = 0; i < 4; i++) idirs.add(new double[]{0.0,0.0});
@@ -176,7 +160,7 @@ public class OnTheFlyCreator extends OpMode {
         if (!finished) {
             telemetry.addData("Tick", i);
             telemetry.addData("Count", points.size());
-            writePointEncoder();
+            writePoint();
 
             if (gamepad1.y) finished = true;
         }
@@ -189,14 +173,14 @@ public class OnTheFlyCreator extends OpMode {
                 telemetry.addData("Ready To Save", 0);
                 telemetry.addData("File Name", fileName);
                 telemetry.addData("Column", column);
-                telemetry.addData("frontTrueBackFalse", frontORback);
-                telemetry.addData("redTrueBackFalse", redORblue);
+                telemetry.addData("frontTrueBackFalse", front);
+                telemetry.addData("redTrueBackFalse", front);
 
                 if (gamepad1.a) fileName = "test.mtmp";
-                if (gamepad1.dpad_down) frontORback = false;
-                if (gamepad1.dpad_right) redORblue = false;
-                if (gamepad1.dpad_left) redORblue = true;
-                if (gamepad1.dpad_up) frontORback = true;
+                if (gamepad1.dpad_down) front = false;
+                if (gamepad1.dpad_right) red = false;
+                if (gamepad1.dpad_left) red = true;
+                if (gamepad1.dpad_up) front = true;
                 if (gamepad1.x) column = 0;
                 if (gamepad1.y) column = 1;
                 if (gamepad1.b) column = 2;
@@ -207,8 +191,8 @@ public class OnTheFlyCreator extends OpMode {
                     if (column == 0) fileName += "Left";
                     else if (column == 1) fileName += "Center";
                     else if (column == 2) fileName += "Right";
-                    fileName += redORblue ? "Red" : "Blue";
-                    fileName += frontORback ? "F" : "B";
+                    fileName += red ? "Red" : "Blue";
+                    fileName += front ? "F" : "B";
                     fileName += ".mtmp";
                     telemetry.addData("FileTest", fileName);
                 }

@@ -28,8 +28,8 @@ public class ConfigOTF extends OpMode {
     public void init() {}
     public void loop() {
         if (!saveReady) {
-            telemetry.addData("red", red);
-            telemetry.addData("front", front);
+            telemetry.addData("red", red ? "True" : "False");
+            telemetry.addData("front", front ? "True" : "False");
             if (gamepad1.dpad_up) front = true;
             if (gamepad1.dpad_down) front = false;
             if (gamepad1.dpad_left) red = false;
@@ -40,7 +40,7 @@ public class ConfigOTF extends OpMode {
         {
             FileWriter obj = null;
             File output;
-            BufferedWriter buffered;
+            BufferedWriter buffered = null;
             try {
                 File dir = new File(fileDir + "/robotSaves/");
                 if (!(dir.exists() && dir.isDirectory())) {
@@ -68,7 +68,9 @@ public class ConfigOTF extends OpMode {
             {
                 if (obj != null) {
                     try {
+                        buffered.close();
                         obj.close();
+                        buffered.close();
                         telemetry.addData("Finished Saving File", 1);
                     }
                     catch (IOException io)
