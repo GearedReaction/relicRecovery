@@ -236,6 +236,11 @@ public class OnTheFlyReader extends OpMode {
             telemetry.addData("Power", OpModeGeneral.leftFront.getDirection());
             if (!mpoints.isEmpty()) {
                 moveEncoder(mpoints.poll());
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
             else {
                 OpModeGeneral.stopAllMotors();

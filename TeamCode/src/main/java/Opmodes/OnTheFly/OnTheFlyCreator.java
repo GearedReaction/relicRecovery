@@ -147,6 +147,9 @@ public class OnTheFlyCreator extends OpMode {
     // OpMode Control
     public void init() {
         OpModeGeneral.motionInit(hardwareMap);
+        OpModeGeneral.sensorInit(hardwareMap);
+        OpModeGeneral.jewelHitter.setPosition(0.5);
+        OpModeGeneral.jewelExtender.setPosition(0.1);
         for (int i = 0; i < 4; i++) idirs.add(new double[]{0.0,0.0});
         for (int z = 0; z < 9; z++) mmap.add(new HashMap<Integer, Double>());
 
@@ -173,8 +176,8 @@ public class OnTheFlyCreator extends OpMode {
                 telemetry.addData("Ready To Save", 0);
                 telemetry.addData("File Name", fileName);
                 telemetry.addData("Column", column);
-                telemetry.addData("frontTrueBackFalse", front);
-                telemetry.addData("redTrueBackFalse", front);
+                telemetry.addData("red", red ? "True" : "False");
+                telemetry.addData("front", front ? "True" : "False");
 
                 if (gamepad1.a) fileName = "test.mtmp";
                 if (gamepad1.dpad_down) front = false;

@@ -238,16 +238,16 @@ public class OpModeGeneral {
             grabberR.setPosition(0.7);
         }
         else {
-            grabberL.setPosition(0.5);
-            grabberR.setPosition(0.5);
+            grabberL.setPosition(1);
+            grabberR.setPosition(0);
         }
         if (openBottom) {
             grabberRB.setPosition(0.3);
             grabberLB.setPosition(0.7);
         }
         else {
-            grabberLB.setPosition(0.5);
-            grabberRB.setPosition(0.5);
+            grabberLB.setPosition(0);
+            grabberRB.setPosition(1);
         }
 
         lifter.setPower(lifterPower);
@@ -384,7 +384,7 @@ public class OpModeGeneral {
 
 
         //Move robot
-        if (forceHalfSpeed) mecanumMove(-gamepad1.left_stick_x/3, -gamepad1.left_stick_y/3, gamepad1.right_stick_x/3, !reverse);
+        if (forceHalfSpeed) mecanumMove(-gamepad1.left_stick_x/2, -gamepad1.left_stick_y/2, gamepad1.right_stick_x/2, !reverse);
         else if (slomo) mecanumMove(-gamepad1.left_stick_x/2, -gamepad1.left_stick_y/2, gamepad1.right_stick_x/2, !reverse);
         else mecanumMove(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x, !reverse);
 
