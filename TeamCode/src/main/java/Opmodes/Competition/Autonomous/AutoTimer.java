@@ -2,6 +2,7 @@ package Opmodes.Competition.Autonomous;
 
 import android.os.Environment;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import java.io.BufferedReader;
@@ -17,27 +18,31 @@ import General.Utility.OpModeGeneral;
  * Created by union on 18年2月9日.
  */
 
+@Autonomous (name = "Autonomous", group = "Competition" )
 public class AutoTimer extends OpMode {
     private File dir = Environment.getExternalStorageDirectory();
     private boolean ready = false;
     private boolean front = true;
     private boolean red = true;
     private int column = 1;
+    private double speed = 0.4;
 
-    private static TimerTask getTheColor, dropDown, moveBack, raise, raisePartial;
-    private static TimerTask driveForward, driveBackward, strafeLeft, turn, turnNegative, fullStop;
+    private static TimerTask lift, stopLift, getTheColor, dropDown, moveBack, raise, raisePartial;
+    private static TimerTask driveForward, driveBackward, strafeLeft, turn, turnNegative, fullStop, stop, stop2;
+    private static TimerTask finalStrafe, strafeStop, finalForward, fForwardStop, dropBlock, finalBack, fBackStop, finalClose, finalPush, finalPushStop, finalBack2, fBack2Stop;
     private static Timer time;
 
 
 
     // Manage TimerTasks
     private void timerScheduleJewel() {
-        time.schedule(dropDown, 0);
-        time.schedule(getTheColor, 1500);
-        time.schedule(raisePartial, 2500);
-        time.schedule(moveBack, 3000);
-        time.schedule(raise, 3500);
-        time.schedule(moveBack, 5000);
+        time.schedule(lift, 500);
+        time.schedule(stopLift, 1250);
+        time.schedule(dropDown, 1500);
+        time.schedule(getTheColor, 3000);
+        time.schedule(raisePartial, 4000);
+        time.schedule(moveBack, 4500);
+        time.schedule(raise, 5000);
     }
 
     private void timerScheduleDrive() {
@@ -49,27 +54,29 @@ public class AutoTimer extends OpMode {
 
         int stopFrontDrive = 7500;
         int turnFront = 8000;
-        int stopTurnFront = 8500;
+        int stopTurnFront = 9050;
 
         // Timing Back
         int stopBackDrive = 7000;
         int strafeBack = 7500;
-        int stopStrafeBack = 8000;
-        int turnBack = 8500;
-        int stopTurnBack = 9500;
+        int stopStrafeBack = 8650;
+        int turnBack = 8700;
+        int stopTurnBack = 11000;
+
+
         // Front Red
         if (front && red) {
             driveForward(startTimeDrive);
             fullStop(stopFrontDrive);
             turnNegative(turnFront);
-            fullStop(stopTurnFront);
+            stop(stopTurnFront);
         }
         // Back Red
         else if (!front && red) {
             driveForward(startTimeDrive);
             fullStop(stopBackDrive);
             strafeLeft(strafeBack);
-            fullStop(stopStrafeBack);
+            stop(stopStrafeBack);
         }
         // Front Blue
         else if (front && !red)
@@ -77,21 +84,48 @@ public class AutoTimer extends OpMode {
             driveBackward(startTimeDrive);
             fullStop(stopFrontDrive);
             turnNegative(turnFront);
-            fullStop(stopTurnFront);
+            stop(stopTurnFront);
         }
         // Back Blue
         else if (!front && !red) {
             driveBackward(startTimeDrive);
             fullStop(stopBackDrive);
             strafeLeft(strafeBack);
-            fullStop(stopStrafeBack);
+            stop(stopStrafeBack);
             turn(turnBack);
-            fullStop(stopTurnBack);
+            stop2(stopTurnBack);
         }
 
     }
 
+    private void timerScheduleFinal() {
+        time.schedule(finalStrafe, 11500);
+        time.schedule(strafeStop, 12450);
+        time.schedule(finalForward, 12500);
+        time.schedule(fForwardStop, 13000);
+        time.schedule(dropBlock, 13500);
+        time.schedule(finalBack, 14000);
+        time.schedule(fBackStop, 14500);
+        time.schedule(finalClose, 15000);
+        time.schedule(finalPush, 15500);
+        time.schedule(finalPushStop, 17500);
+        time.schedule(finalBack2, 18000);
+        time.schedule(fBack2Stop, 18150);
+    }
+
     private void jewelInit() {
+        lift = new TimerTask() {
+            public void run() {
+                OpModeGeneral.lifter.setPower(-speed);
+            }
+        };
+
+        stopLift = new TimerTask() {
+            public void run() {
+                OpModeGeneral.lifter.setPower(0);
+            }
+        };
+
         dropDown = new TimerTask() {
             public void run() {
                 OpModeGeneral.jewelExtender.setPosition(1);
@@ -138,31 +172,115 @@ public class AutoTimer extends OpMode {
     private void driveInit() {
         driveForward = new TimerTask() {
             public void run() {
-                OpModeGeneral.mecanumMove(0,0.5,0, true);
+                OpModeGeneral.mecanumMove(0,speed,0, false);
             }
         };
         driveBackward = new TimerTask() {
             public void run() {
-                OpModeGeneral.mecanumMove(0,-0.5,0, true);
+                OpModeGeneral.mecanumMove(0,-speed,0, false);
             }
         };
         strafeLeft = new TimerTask() {
             public void run() {
-                OpModeGeneral.mecanumMove(-0.5,0,0, true);
+                OpModeGeneral.mecanumMove(speed,0,0, false);
             }
         };
         turn = new TimerTask() {
             public void run() {
-                OpModeGeneral.mecanumMove(0,0,0.5, true);
+                OpModeGeneral.mecanumMove(0,0,-speed, false);
             }
         };
         turnNegative = new TimerTask() {
             public void run() {
-                OpModeGeneral.mecanumMove(0,0,-0.5, true);
+                OpModeGeneral.mecanumMove(0,0,speed, false);
             }
         };
 
         fullStop = new TimerTask() {
+            public void run() {
+                OpModeGeneral.stopAllMotors();
+            }
+        };
+        stop = new TimerTask() {
+            public void run() {
+                OpModeGeneral.stopAllMotors();
+            }
+        };
+        stop2 = new TimerTask() {
+            public void run() {
+                OpModeGeneral.stopAllMotors();
+            }
+        };
+    }
+
+    private void finalInit() {
+        finalStrafe = new TimerTask() {
+            public void run() {
+                if (column == 0)
+                    OpModeGeneral.mecanumMove(speed,0,0, false);
+                if (column == 2)
+                    OpModeGeneral.mecanumMove(-speed,0,0, false);
+            }
+        };
+        strafeStop = new TimerTask() {
+            public void run() {
+                OpModeGeneral.stopAllMotors();
+            }
+        };
+        finalForward = new TimerTask() {
+            public void run() {
+                OpModeGeneral.mecanumMove(0,speed,0, false);
+            }
+        };
+        fForwardStop = new TimerTask() {
+            public void run() {
+                OpModeGeneral.stopAllMotors();
+            }
+        };
+        dropBlock = new TimerTask() {
+            public void run() {
+                OpModeGeneral.grabberL.setPosition(0.3);
+                OpModeGeneral.grabberR.setPosition(0.7);
+                OpModeGeneral.grabberRB.setPosition(0.3);
+                OpModeGeneral.grabberLB.setPosition(0.7);
+            }
+        };
+        finalBack = new TimerTask() {
+            public void run() {
+                OpModeGeneral.mecanumMove(0,-speed,0, false);
+            }
+        };
+        fBackStop = new TimerTask() {
+            public void run() {
+                OpModeGeneral.stopAllMotors();
+            }
+        };
+        finalClose = new TimerTask() {
+            public void run() {
+                OpModeGeneral.grabberL.setPosition(1);
+                OpModeGeneral.grabberR.setPosition(0);
+                OpModeGeneral.grabberRB.setPosition(1);
+                OpModeGeneral.grabberLB.setPosition(0);
+                OpModeGeneral.lifter.setPower(speed);
+            }
+        };
+        finalPush = new TimerTask() {
+            public void run() {
+                OpModeGeneral.lifter.setPower(0);
+                OpModeGeneral.mecanumMove(0,speed,0, false);
+            }
+        };
+        finalPushStop = new TimerTask() {
+            public void run() {
+                OpModeGeneral.stopAllMotors();
+            }
+        };
+        finalBack2 = new TimerTask() {
+            public void run() {
+                OpModeGeneral.mecanumMove(0,-speed,0, false);
+            }
+        };
+        fBack2Stop = new TimerTask() {
             public void run() {
                 OpModeGeneral.stopAllMotors();
             }
@@ -207,6 +325,7 @@ public class AutoTimer extends OpMode {
         OpModeGeneral.grabberRB.setPosition(0);
         jewelInit();
         driveInit();
+        finalInit();
     }
 
     public void start() {
@@ -214,8 +333,13 @@ public class AutoTimer extends OpMode {
         if (c != -1) {
             column = c;
         }
+        OpModeGeneral.grabberL.setPosition(1);
+        OpModeGeneral.grabberR.setPosition(0);
+        OpModeGeneral.grabberRB.setPosition(1);
+        OpModeGeneral.grabberLB.setPosition(0);
         timerScheduleJewel();
         timerScheduleDrive();
+        timerScheduleFinal();
     }
 
     public void loop() {}
@@ -237,5 +361,11 @@ public class AutoTimer extends OpMode {
     }
     private void fullStop(int timer) {
         time.schedule(fullStop, timer);
+    }
+    private void stop(int timer) {
+        time.schedule(stop, timer);
+    }
+    private void stop2(int timer) {
+        time.schedule(stop2, timer);
     }
 }

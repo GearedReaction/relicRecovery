@@ -33,6 +33,8 @@ public class OpModeGeneral {
     private static boolean manualMode = false;
     private static boolean reverse = false;
     private static boolean slomo = false;
+    private static int flipState = 0;
+    private static boolean grabState;
 
 
 
@@ -46,15 +48,20 @@ public class OpModeGeneral {
     public static DcMotor rightBack;
     public static DcMotor leftFront;
     public static DcMotor leftBack;
+    public static DcMotor extender;
     public static DcMotor lifter;
+
 
     // Servos
     public static Servo jewelExtender;
     public static Servo jewelHitter;
-    public static Servo grabberL;
-    public static Servo grabberR;
     public static Servo grabberLB;
     public static Servo grabberRB;
+    public static Servo grabberL;
+    public static Servo grabberR;
+    public static Servo flipper;
+    public static Servo relic;
+
 
 
 
@@ -89,6 +96,7 @@ public class OpModeGeneral {
         rightFront = hardwareMap.dcMotor.get("rightF");
         rightBack = hardwareMap.dcMotor.get("rightB");
         lifter = hardwareMap.dcMotor.get("lifter");
+        extender = hardwareMap.dcMotor.get("extender");
     }
 
     public static void servoInit(HardwareMap hardwareMap) {
@@ -98,6 +106,8 @@ public class OpModeGeneral {
         grabberRB = hardwareMap.servo.get("grabberRB");
         jewelExtender = hardwareMap.servo.get("jewelExtender");
         jewelHitter = hardwareMap.servo.get("jewelHitter");
+        flipper = hardwareMap.servo.get("relic");
+        relic = hardwareMap.servo.get("flipper");
     }
 
     public static void allInit (HardwareMap hardwareMap) {
@@ -378,6 +388,7 @@ public class OpModeGeneral {
         if (gamepad1.a) lastAButton = true;
         else lastAButton = false;
 
+
         //Trigger slow-mo
         if (gamepad1.x & !lastXButton) slomo = !slomo;
         if (gamepad1.x) lastXButton = true;
@@ -387,6 +398,30 @@ public class OpModeGeneral {
         if (gamepad1.b & !lastBButton) manualMode = !manualMode;
         if (gamepad1.b) lastBButton = true;
         else lastBButton = false;
+
+        //Control Extender
+        if (gamepad2.dpad_left) flipState = 0;
+        if (gamepad2.dpad_down) flipState = 1;
+        if (gamepad2.dpad_right) flipState = 2;
+
+        switch (flipState) {
+            case 0:
+                flipper.setPosition(1);
+                break;
+            case 1:
+                flipper.setPosition(0.65);
+                break;
+            case 2:
+                flipper.setPosition(0);
+        }
+        if (gamepad2.x) grabState = true;
+        if (gamepad2.b) grabState = false;
+        if (-gamepad2.left_stick_y > 0) extender.setPower(-gamepad2.left_stick_y);
+        else extender.setPower(-gamepad2.left_stick_y / 3);
+        if (grabState) extender.setPower(1);
+        if (gamepad2.a) relic.setPosition(0.5);
+        else if (gamepad2.y) relic.setPosition(0);
+        else relic.setPosition(0.8);
 
 
         //Move robot
