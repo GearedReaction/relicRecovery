@@ -22,27 +22,76 @@ public class AutoTimer extends OpMode {
     private boolean ready = false;
     private boolean front = true;
     private boolean red = true;
+    private int column = 1;
 
-    private static TimerTask getTheColor, dropDown, moveBack, raise, raisePartial, run, move, moveReverse;
+    private static TimerTask getTheColor, dropDown, moveBack, raise, raisePartial;
+    private static TimerTask driveForward, driveBackward, strafeLeft, turn, turnNegative, fullStop;
     private static Timer time;
 
 
+
     // Manage TimerTasks
-    private void timerSchedule() {
+    private void timerScheduleJewel() {
         time.schedule(dropDown, 0);
         time.schedule(getTheColor, 1500);
         time.schedule(raisePartial, 2500);
         time.schedule(moveBack, 3000);
         time.schedule(raise, 3500);
         time.schedule(moveBack, 5000);
+    }
 
+    private void timerScheduleDrive() {
+        // Starting from 6000
 
-        //time.schedule(run, 4000);
+        int startTimeDrive = 6000;
+
+        // Timing Front
+
+        int stopFrontDrive = 7500;
+        int turnFront = 8000;
+        int stopTurnFront = 8500;
+
+        // Timing Back
+        int stopBackDrive = 7000;
+        int strafeBack = 7500;
+        int stopStrafeBack = 8000;
+        int turnBack = 8500;
+        int stopTurnBack = 9500;
+        // Front Red
+        if (front && red) {
+            driveForward(startTimeDrive);
+            fullStop(stopFrontDrive);
+            turnNegative(turnFront);
+            fullStop(stopTurnFront);
+        }
+        // Back Red
+        else if (!front && red) {
+            driveForward(startTimeDrive);
+            fullStop(stopBackDrive);
+            strafeLeft(strafeBack);
+            fullStop(stopStrafeBack);
+        }
+        // Front Blue
+        else if (front && !red)
+        {
+            driveBackward(startTimeDrive);
+            fullStop(stopFrontDrive);
+            turnNegative(turnFront);
+            fullStop(stopTurnFront);
+        }
+        // Back Blue
+        else if (!front && !red) {
+            driveBackward(startTimeDrive);
+            fullStop(stopBackDrive);
+            strafeLeft(strafeBack);
+            fullStop(stopStrafeBack);
+            turn(turnBack);
+            fullStop(stopTurnBack);
+        }
+
     }
 
     private void jewelInit() {
-        time = new Timer();
-
         dropDown = new TimerTask() {
             public void run() {
                 OpModeGeneral.jewelExtender.setPosition(1);
@@ -84,23 +133,38 @@ public class AutoTimer extends OpMode {
             }
         };
 
-        run = new TimerTask() {
-            public void run() {
-                ready = true;
-            }
-        };
     }
 
     private void driveInit() {
-        move = new TimerTask() {
+        driveForward = new TimerTask() {
             public void run() {
-                OpModeGeneral.mecanumMove(0,1,0,false);
+                OpModeGeneral.mecanumMove(0,0.5,0, true);
+            }
+        };
+        driveBackward = new TimerTask() {
+            public void run() {
+                OpModeGeneral.mecanumMove(0,-0.5,0, true);
+            }
+        };
+        strafeLeft = new TimerTask() {
+            public void run() {
+                OpModeGeneral.mecanumMove(-0.5,0,0, true);
+            }
+        };
+        turn = new TimerTask() {
+            public void run() {
+                OpModeGeneral.mecanumMove(0,0,0.5, true);
+            }
+        };
+        turnNegative = new TimerTask() {
+            public void run() {
+                OpModeGeneral.mecanumMove(0,0,-0.5, true);
             }
         };
 
-        moveReverse = new TimerTask() {
+        fullStop = new TimerTask() {
             public void run() {
-                OpModeGeneral.mecanumMove(0,-1,0,false);
+                OpModeGeneral.stopAllMotors();
             }
         };
     }
@@ -133,6 +197,7 @@ public class AutoTimer extends OpMode {
     // OpMode Control
     public void init() {
         loadConfig();
+        time = new Timer();
         OpModeGeneral.allInit(hardwareMap);
         OpModeGeneral.jewelHitter.setPosition(0.5);
         OpModeGeneral.jewelExtender.setPosition(0.1);
@@ -141,11 +206,36 @@ public class AutoTimer extends OpMode {
         OpModeGeneral.grabberLB.setPosition(1);
         OpModeGeneral.grabberRB.setPosition(0);
         jewelInit();
+        driveInit();
     }
 
     public void start() {
-        timerSchedule();
+        int c = OpModeGeneral.camera.getVuMark();
+        if (c != -1) {
+            column = c;
+        }
+        timerScheduleJewel();
+        timerScheduleDrive();
     }
 
     public void loop() {}
+
+    private void driveForward(int timer) {
+        time.schedule(driveForward, timer);
+    }
+    private void driveBackward(int timer) {
+        time.schedule(driveBackward, timer);
+    }
+    private void strafeLeft(int timer) {
+        time.schedule(strafeLeft, timer);
+    }
+    private void turn(int timer) {
+        time.schedule(turn, timer);
+    }
+    private void turnNegative(int timer) {
+        time.schedule(turnNegative, timer);
+    }
+    private void fullStop(int timer) {
+        time.schedule(fullStop, timer);
+    }
 }

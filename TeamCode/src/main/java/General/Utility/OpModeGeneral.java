@@ -73,6 +73,12 @@ public class OpModeGeneral {
     }
 
     public static void motionInit (HardwareMap hardwareMap) {
+        reverse = false;
+        slomo = false;
+        manualMode = false;
+        lastAButton = false;
+        lastXButton = false;
+        lastBButton = false;
         motorInit(hardwareMap);
         servoInit(hardwareMap);
     }
