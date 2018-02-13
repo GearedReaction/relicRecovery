@@ -295,7 +295,8 @@ public class AutoTimer extends OpMode {
             int i = 0;
             while((line = reader.readLine()) != null) {
                 if (i == 0) front = (line.equals("1"));
-                else red = (line.equals("1"));
+                if (i == 1) red = (line.equals("1"));
+                if (i == 2) speed = Double.parseDouble(line);
                 i++;
             }
         }

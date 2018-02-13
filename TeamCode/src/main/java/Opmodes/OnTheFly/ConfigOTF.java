@@ -23,6 +23,7 @@ public class ConfigOTF extends OpMode {
     private boolean saveReady = false;
     private boolean front = false;
     private boolean red = true;
+    private double speed = 0.4;
 
 
     public void init() {}
@@ -30,10 +31,15 @@ public class ConfigOTF extends OpMode {
         if (!saveReady) {
             telemetry.addData("red", red ? "True" : "False");
             telemetry.addData("front", front ? "True" : "False");
+            telemetry.addData("speed", speed);
             if (gamepad1.dpad_up) front = true;
             if (gamepad1.dpad_down) front = false;
             if (gamepad1.dpad_left) red = false;
             if (gamepad1.dpad_right) red = true;
+            if (gamepad1.y) speed += 0.0001;
+            else if (gamepad1.a) speed -= 0.0001;
+            try { Thread.sleep(5); }
+            catch (InterruptedException e) {}
             if (gamepad1.start) saveReady = true;
         }
         else
@@ -53,6 +59,7 @@ public class ConfigOTF extends OpMode {
                 buffered.newLine();
                 buffered.write(red ? "1" : "0");
                 buffered.newLine();
+                buffered.write(""+speed);
             }
             catch (FileNotFoundException fl)
             {
